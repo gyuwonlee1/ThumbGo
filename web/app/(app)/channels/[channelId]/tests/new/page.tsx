@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft, ChevronRight, Upload, X, Check,
-  Users, Target, Zap, ImagePlus
+  Users, Target, Zap, ImagePlus, AlertTriangle
 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,7 +51,7 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
   const [selectedGenders, setSelectedGenders] = useState<string[]>(["M", "F"]);
   const [selectedAges, setSelectedAges] = useState<string[]>(["10s", "20s", "30s", "40s", "50s+"]);
   const [endType, setEndType] = useState("VOTE_COUNT");
-  const [voteTarget, setVoteTarget] = useState(300);
+  const [voteTarget, setVoteTarget] = useState(100);
   const [durationHours, setDurationHours] = useState(48);
   const [selectedCategory, setSelectedCategory] = useState<string>(channel.category);
   const [isDragging, setIsDragging] = useState<number | null>(null);
@@ -59,7 +59,7 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
 
   const THUMBNAIL_LABELS = ["A", "B", "C", "D"];
   const matchCount = Math.round(1240 * (selectedGenders.length / 2) * (selectedAges.length / 5));
-  const estimatedCredits = endType === "MANUAL" ? null : Math.ceil(voteTarget / 100);
+  const estimatedCredits = endType === "MANUAL" ? null : Math.ceil(voteTarget / 50);
 
   const addThumbnail = () => {
     if (thumbnails.length < 4) {
@@ -398,24 +398,57 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
                 {/* Vote Count Setting */}
                 {(endType === "VOTE_COUNT" || endType === "FIRST_OF") && (
                   <div className="space-y-3 animate-fade-in">
-                    <div className="flex items-center justify-between">
-                      <label className="text-sm font-medium text-slate-700">목표 투표 수</label>
-                      <span className="text-sm font-bold text-indigo-600">{voteTarget.toLocaleString()}표</span>
+                    <label className="text-sm font-medium text-slate-700">목표 투표 수</label>
+                    <div className="grid grid-cols-4 gap-2">
+                      {[
+                        { votes: 50, credits: 1, label: "50명", sub: "1 크레딧", warn: true },
+                        { votes: 100, credits: 2, label: "100명", sub: "2 크레딧", warn: false },
+                        { votes: 150, credits: 3, label: "150명", sub: "3 크레딧", warn: false },
+                        { votes: 200, credits: 4, label: "200명", sub: "4 크레딧", warn: false },
+                      ].map((opt) => (
+                        <button
+                          key={opt.votes}
+                          type="button"
+                          onClick={() => setVoteTarget(opt.votes)}
+                          className={cn(
+                            "rounded-xl border-2 p-3 text-center transition-all",
+                            voteTarget === opt.votes
+                              ? "border-indigo-500 bg-indigo-50"
+                              : "border-slate-200 hover:border-slate-300 bg-white"
+                          )}
+                        >
+                          <p className={cn(
+                            "text-sm font-bold",
+                            voteTarget === opt.votes ? "text-indigo-700" : "text-slate-800"
+                          )}>
+                            {opt.label}
+                          </p>
+                          <p className={cn(
+                            "text-xs mt-0.5 font-medium",
+                            voteTarget === opt.votes ? "text-indigo-500" : "text-slate-400"
+                          )}>
+                            {opt.sub}
+                          </p>
+                          {opt.warn && (
+                            <AlertTriangle className="h-3 w-3 text-amber-400 mx-auto mt-1" />
+                          )}
+                        </button>
+                      ))}
                     </div>
-                    <input
-                      type="range"
-                      min={100}
-                      max={1000}
-                      step={100}
-                      value={voteTarget}
-                      onChange={(e) => setVoteTarget(Number(e.target.value))}
-                      className="w-full h-2 rounded-full appearance-none cursor-pointer accent-indigo-600 bg-slate-200"
-                    />
-                    <div className="flex justify-between text-[11px] text-slate-400">
-                      <span>100표</span>
-                      <span>500표</span>
-                      <span>1,000표</span>
-                    </div>
+                    {voteTarget === 50 && (
+                      <div className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 p-3 animate-fade-in">
+                        <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                        <p className="text-xs text-amber-700 leading-relaxed">
+                          <span className="font-semibold">통계 신뢰도 주의</span> — 50명 결과는 오차 ±14%p로,
+                          28%p 이상의 명확한 차이만 신뢰할 수 있습니다. 빠른 초안 스크리닝 용도로 사용하세요.
+                        </p>
+                      </div>
+                    )}
+                    {voteTarget === 100 && (
+                      <p className="text-xs text-emerald-600 font-medium">
+                        ✓ 권장 기본값 — 오차 ±10%p, 대부분의 영상에 적합합니다.
+                      </p>
+                    )}
                   </div>
                 )}
 
@@ -462,7 +495,7 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
                   </div>
                   {endType === "MANUAL" && (
                     <p className="text-[11px] text-slate-400 pt-1 leading-relaxed">
-                      수동 종료 시 실제 집계된 투표 수 기준으로 크레딧이 차감됩니다. (100표당 1크레딧)
+                      수동 종료 시 실제 집계된 투표 수 기준으로 크레딧이 차감됩니다. (50표당 1크레딧)
                     </p>
                   )}
                 </div>

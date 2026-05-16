@@ -41,32 +41,47 @@ const steps = [
 
 const plans = [
   {
-    name: "무료",
+    name: "Free",
     price: "0",
-    description: "개인 크리에이터·소규모 에이전시",
-    credits: 10,
-    channels: 2,
-    features: ["월 10 크레딧", "채널 2개", "기본 결과 분석", "이메일 지원"],
+    priceSub: "",
+    description: "개인 크리에이터 · 체험용",
+    features: [
+      "가입 즉시 5 크레딧 (일회성)",
+      "첫 테스트 완료 시 +2 크레딧",
+      "결제수단 등록 시 +3 크레딧",
+      "채널 2개 · 팀 1명",
+      "시안 2~3개 · 기본 필터",
+    ],
     cta: "무료로 시작",
     highlight: false,
   },
   {
     name: "Starter",
-    price: "79,000",
+    price: "190,000",
+    priceSub: "/ 월",
     description: "성장하는 MCN · 5인 이하 팀",
-    credits: 30,
-    channels: 10,
-    features: ["월 30 크레딧", "채널 10개", "AI 썸네일 분석", "채널 인사이트", "팀 멤버 3명", "우선 지원"],
-    cta: "14일 무료 체험",
+    features: [
+      "매월 16 크레딧 자동 지급",
+      "미사용 최대 32 크레딧 이월",
+      "추가 크레딧 ₩13,000/개",
+      "채널 10개 · 팀 3명",
+      "시안 2~4개 · AI 분석 8요소",
+    ],
+    cta: "시작하기",
     highlight: true,
   },
   {
     name: "Pro",
-    price: "199,000",
+    price: "490,000",
+    priceSub: "/ 월",
     description: "대형 MCN · 에이전시",
-    credits: 100,
-    channels: 999,
-    features: ["월 100 크레딧", "채널 무제한", "AI 전체 분석", "API 연동", "팀 멤버 무제한", "전담 매니저"],
+    features: [
+      "매월 48 크레딧 자동 지급",
+      "미사용 최대 96 크레딧 이월",
+      "추가 크레딧 ₩11,000/개",
+      "채널 무제한 · 팀 무제한",
+      "채널 누적 인사이트 · API · 우선 패널링",
+    ],
     cta: "문의하기",
     highlight: false,
   },
@@ -155,7 +170,7 @@ export default function LandingPage() {
               </Link>
             </Button>
           </div>
-          <p className="mt-4 text-sm text-slate-400">신용카드 불필요 · 월 3회 무료 · 설정 5분</p>
+          <p className="mt-4 text-sm text-slate-400">신용카드 불필요 · 가입 시 5 크레딧 무료 · 설정 5분</p>
         </div>
 
         {/* Dashboard Preview */}
@@ -193,7 +208,7 @@ export default function LandingPage() {
                     { label: "관리 채널", value: "12" },
                     { label: "진행 중 테스트", value: "5" },
                     { label: "이번 주 업로드", value: "8" },
-                    { label: "남은 크레딧", value: "47" },
+                    { label: "남은 크레딧", value: "11" },
                   ].map((kpi) => (
                     <div key={kpi.label} className="bg-white/10 rounded-lg p-3">
                       <p className="text-xs text-slate-400">{kpi.label}</p>
@@ -305,7 +320,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-5xl px-6">
           <div className="text-center mb-14">
             <h2 className="text-3xl font-bold text-slate-900">합리적인 요금제</h2>
-            <p className="mt-3 text-slate-500">팀 규모와 테스트 양에 맞게 선택하세요.</p>
+            <p className="mt-3 text-slate-500">월 구독으로 예측 가능한 비용, 필요할 때 추가 크레딧 구매.</p>
           </div>
           <div className="grid grid-cols-3 gap-6">
             {plans.map((plan) => (
@@ -330,10 +345,10 @@ export default function LandingPage() {
                 </p>
                 <div className="mt-4 mb-6">
                   <span className={`text-3xl font-bold ${plan.highlight ? "text-white" : "text-slate-900"}`}>
-                    ₩{plan.price}
+                    {plan.price === "0" ? "무료" : `₩${plan.price}`}
                   </span>
-                  {plan.price !== "0" && (
-                    <span className={`text-sm ml-1 ${plan.highlight ? "text-indigo-200" : "text-slate-400"}`}>/월</span>
+                  {plan.priceSub && (
+                    <span className={`text-sm ml-1 ${plan.highlight ? "text-indigo-200" : "text-slate-400"}`}>{plan.priceSub}</span>
                   )}
                 </div>
                 <ul className="space-y-2.5 mb-6">
@@ -362,7 +377,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-3xl px-6 text-center">
           <Clock className="h-8 w-8 text-indigo-300 mx-auto mb-4" />
           <h2 className="text-3xl font-bold text-white">지금 바로 첫 테스트를 시작하세요</h2>
-          <p className="mt-3 text-indigo-200">신용카드 없이 월 3회 무료. 에이전시 팀 계정으로 즉시 시작.</p>
+          <p className="mt-3 text-indigo-200">가입 즉시 5 크레딧 무료 지급. 최대 10 크레딧까지 신용카드 없이 받을 수 있어요.</p>
           <Button variant="secondary" size="xl" className="mt-8" asChild>
             <Link href="/signup">
               무료로 시작하기

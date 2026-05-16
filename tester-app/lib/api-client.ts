@@ -180,10 +180,27 @@ export async function getHomeSummary(): Promise<HomeSummary> {
   };
 }
 
+const DAILY_VOTE_LIMIT = 5;
+
+async function getTodayVoteCount(testerId: string): Promise<number> {
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const { count } = await supabase
+    .from("Vote")
+    .select("*", { count: "exact", head: true })
+    .eq("testerId", testerId)
+    .gte("createdAt", todayStart.toISOString());
+  return count ?? 0;
+}
+
 // ─── 테스트 피드 ──────────────────────────────
 export async function getTestFeed(): Promise<ThumbnailTest[]> {
   const testerId = await getCurrentTesterId();
   if (!testerId) return fixtureTestFeed;
+
+  // 하루 5회 제한 확인
+  const todayCount = await getTodayVoteCount(testerId);
+  if (todayCount >= DAILY_VOTE_LIMIT) return [];
 
   // 테스터 프로필 가져오기
   const { data: tester } = await supabase
@@ -273,6 +290,12 @@ export async function submitVote(payload: VoteSubmitInput) {
 
   if (!testerId) {
     return { accepted: false, error: "Not authenticated" };
+  }
+
+  // 서버사이드 일일 5회 제한
+  const todayCount = await getTodayVoteCount(testerId);
+  if (todayCount >= DAILY_VOTE_LIMIT) {
+    return { accepted: false, error: "DAILY_LIMIT_REACHED" };
   }
 
   const { error } = await supabase.from("Vote").insert({

@@ -9,10 +9,10 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/lib/supabase";
 
 const benefits = [
-  "월 3회 무료 썸네일 테스트",
-  "채널 2개 무료 연결",
-  "신용카드 불필요",
-  "5분 내 첫 테스트 시작",
+  "가입 즉시 5 크레딧 무료 지급",
+  "첫 테스트 완료 시 +2 크레딧 추가",
+  "결제수단 등록 시 +3 크레딧 추가",
+  "신용카드 없이 바로 시작 가능",
 ];
 
 export default function SignupPage() {
@@ -50,7 +50,7 @@ export default function SignupPage() {
         </Link>
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">무료로 시작하세요</h2>
-          <p className="text-indigo-200 text-sm mb-8">신용카드 없이 지금 바로 썸네일을 검증하세요.</p>
+          <p className="text-indigo-200 text-sm mb-8">가입만 해도 5 크레딧 즉시 지급. 최대 10 크레딧까지 무료로 받을 수 있어요.</p>
           <ul className="space-y-3">
             {benefits.map((b) => (
               <li key={b} className="flex items-center gap-3 text-sm text-indigo-100">
