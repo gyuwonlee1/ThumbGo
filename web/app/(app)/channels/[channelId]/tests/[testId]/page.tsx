@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { mockTestResults } from "@/lib/mock-data";
+import { mockTestResultsMap } from "@/lib/mock-data";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend
@@ -18,8 +18,8 @@ const THUMBNAIL_COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ef4444"];
 const THUMBNAIL_BG = ["bg-indigo-600", "bg-emerald-600", "bg-amber-600", "bg-red-600"];
 
 export default function TestResultPage({ params }: { params: Promise<{ channelId: string; testId: string }> }) {
-  const { channelId } = use(params);
-  const test = mockTestResults;
+  const { channelId, testId } = use(params);
+  const test = mockTestResultsMap[testId] ?? mockTestResultsMap["test_1"];
 
   const winner = test.thumbnails.reduce((a, b) => a.voteCount > b.voteCount ? a : b);
   const barData = test.thumbnails.map((t) => ({

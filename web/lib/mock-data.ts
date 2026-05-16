@@ -70,7 +70,7 @@ export const mockUpcomingEvents = [
   {
     id: "ev_1",
     type: "upload" as const,
-    title: "롤 시즌 리뷰 영상",
+    title: "롤 시즌 14 격변 리뷰 — 진짜 바뀐 거 맞냐고?",
     channelName: "게임왕 채널",
     date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2),
     testId: "test_1",
@@ -123,7 +123,7 @@ export const mockActiveTests: ActiveTest[] = [
     id: "test_1",
     channelId: "ch_1",
     channelName: "게임왕 채널",
-    title: "롤 시즌 14 격변 리뷰 — 어떤 썸네일?",
+    title: "롤 시즌 14 격변 리뷰 — 진짜 바뀐 거 맞냐고?",
     thumbnailCount: 3,
     totalVotes: 234,
     targetVotes: 500,
@@ -178,65 +178,115 @@ export const mockCompletedTests = [
   },
 ];
 
-export const mockTestResults = {
-  id: "test_1",
-  title: "롤 시즌 14 격변 리뷰",
-  status: "COMPLETED",
-  totalVotes: 512,
-  thumbnails: [
-    {
-      id: "th_a",
-      label: "A",
-      fileUrl: "/api/placeholder/1280/720",
-      voteCount: 329,
-      ctr: 64.3,
-      ci: 3.1,
-      note: "강렬한 빨간 배경 + 충격 표정",
+export const mockTestResultsMap: Record<string, {
+  id: string;
+  title: string;
+  status: string;
+  totalVotes: number;
+  thumbnails: { id: string; label: string; fileUrl: string; voteCount: number; ctr: number; ci: number; note: string }[];
+  demographicData: { gender: Record<string, Record<string, number>>; ageGroups: Record<string, Record<string, number>> };
+  timeSeriesData: { hour: number; A: number; B: number; C?: number; D?: number }[];
+  analysis: { thumbnailId: string; label: string; hasFace: boolean; faceEmotion: string | null; fontPosition: string; keywords: string[]; saturation: string }[];
+}> = {
+  test_1: {
+    id: "test_1",
+    title: "롤 시즌 14 격변 리뷰 — 진짜 바뀐 거 맞냐고?",
+    status: "COMPLETED",
+    totalVotes: 512,
+    thumbnails: [
+      { id: "th_1a", label: "A", fileUrl: "/api/placeholder/1280/720", voteCount: 329, ctr: 64.3, ci: 3.1, note: "강렬한 빨간 배경 + 충격 표정" },
+      { id: "th_1b", label: "B", fileUrl: "/api/placeholder/1280/720", voteCount: 183, ctr: 35.7, ci: 2.8, note: "깔끔한 정보형 디자인" },
+    ],
+    demographicData: {
+      gender: { M: { A: 68, B: 32 }, F: { A: 59, B: 41 } },
+      ageGroups: { "10s": { A: 72, B: 28 }, "20s": { A: 65, B: 35 }, "30s": { A: 58, B: 42 }, "40s": { A: 52, B: 48 } },
     },
-    {
-      id: "th_b",
-      label: "B",
-      fileUrl: "/api/placeholder/1280/720",
-      voteCount: 183,
-      ctr: 35.7,
-      ci: 2.8,
-      note: "깔끔한 정보형 디자인",
-    },
-  ],
-  demographicData: {
-    gender: { M: { A: 68, B: 32 }, F: { A: 59, B: 41 } },
-    ageGroups: {
-      "10s": { A: 72, B: 28 },
-      "20s": { A: 65, B: 35 },
-      "30s": { A: 58, B: 42 },
-      "40s": { A: 52, B: 48 },
-    },
+    timeSeriesData: Array.from({ length: 24 }, (_, i) => ({ hour: i, A: Math.round(10 + i * 13.5), B: Math.round(5 + i * 7.2) })),
+    analysis: [
+      { thumbnailId: "th_1a", label: "A", hasFace: true, faceEmotion: "놀람", fontPosition: "좌상단", keywords: ["시즌14", "격변", "충격"], saturation: "고채도" },
+      { thumbnailId: "th_1b", label: "B", hasFace: false, faceEmotion: null, fontPosition: "중앙", keywords: ["리뷰", "패치노트"], saturation: "저채도" },
+    ],
   },
-  timeSeriesData: Array.from({ length: 24 }, (_, i) => ({
-    hour: i,
-    A: Math.round(10 + i * 13.5 + Math.random() * 5),
-    B: Math.round(5 + i * 7.2 + Math.random() * 5),
-  })),
-  analysis: [
-    {
-      thumbnailId: "th_a",
-      label: "A",
-      hasFace: true,
-      faceEmotion: "놀람",
-      fontPosition: "좌상단",
-      keywords: ["시즌14", "격변", "충격"],
-      saturation: "고채도",
+  test_2: {
+    id: "test_2",
+    title: "가을 감성 메이크업 (3분 버전)",
+    status: "ACTIVE",
+    totalVotes: 187,
+    thumbnails: [
+      { id: "th_2a", label: "A", fileUrl: "/api/placeholder/1280/720", voteCount: 72, ctr: 38.5, ci: 3.8, note: "클로즈업 글로우 메이크업" },
+      { id: "th_2b", label: "B", fileUrl: "/api/placeholder/1280/720", voteCount: 115, ctr: 61.5, ci: 3.5, note: "비포/애프터 나란히 구성" },
+    ],
+    demographicData: {
+      gender: { M: { A: 52, B: 48 }, F: { A: 31, B: 69 } },
+      ageGroups: { "10s": { A: 35, B: 65 }, "20s": { A: 28, B: 72 }, "30s": { A: 40, B: 60 }, "40s": { A: 48, B: 52 } },
     },
-    {
-      thumbnailId: "th_b",
-      label: "B",
-      hasFace: false,
-      faceEmotion: null,
-      fontPosition: "중앙",
-      keywords: ["리뷰", "패치노트"],
-      saturation: "저채도",
+    timeSeriesData: Array.from({ length: 24 }, (_, i) => ({ hour: i, A: Math.round(3 + i * 3.1), B: Math.round(5 + i * 4.8) })),
+    analysis: [
+      { thumbnailId: "th_2a", label: "A", hasFace: true, faceEmotion: "미소", fontPosition: "우하단", keywords: ["글로우", "가을", "메이크업"], saturation: "중채도" },
+      { thumbnailId: "th_2b", label: "B", hasFace: true, faceEmotion: "자연스러움", fontPosition: "상단 배너", keywords: ["비포", "애프터", "3분"], saturation: "고채도" },
+    ],
+  },
+  test_3: {
+    id: "test_3",
+    title: "간장게장 황금 레시피 공개!",
+    status: "ACTIVE",
+    totalVotes: 89,
+    thumbnails: [
+      { id: "th_3a", label: "A", fileUrl: "/api/placeholder/1280/720", voteCount: 38, ctr: 42.7, ci: 5.3, note: "간장게장 클로즈업 + 김 연출" },
+      { id: "th_3b", label: "B", fileUrl: "/api/placeholder/1280/720", voteCount: 19, ctr: 21.3, ci: 4.4, note: "재료 나열형 레이아웃" },
+      { id: "th_3c", label: "C", fileUrl: "/api/placeholder/1280/720", voteCount: 24, ctr: 27.0, ci: 4.8, note: "밥 위에 게장 올린 완성샷" },
+      { id: "th_3d", label: "D", fileUrl: "/api/placeholder/1280/720", voteCount: 8, ctr: 9.0, ci: 3.1, note: "텍스트 중심 정보형" },
+    ],
+    demographicData: {
+      gender: { M: { A: 45, B: 55 }, F: { A: 55, B: 45 } },
+      ageGroups: { "10s": { A: 40, B: 60 }, "20s": { A: 43, B: 57 }, "30s": { A: 50, B: 50 }, "40s": { A: 58, B: 42 } },
     },
-  ],
+    timeSeriesData: Array.from({ length: 24 }, (_, i) => ({ hour: i, A: Math.round(1 + i * 1.6), B: Math.round(1 + i * 0.8) })),
+    analysis: [
+      { thumbnailId: "th_3a", label: "A", hasFace: false, faceEmotion: null, fontPosition: "좌상단", keywords: ["황금레시피", "간장게장", "밥도둑"], saturation: "고채도" },
+      { thumbnailId: "th_3b", label: "B", hasFace: false, faceEmotion: null, fontPosition: "중앙", keywords: ["레시피", "재료"], saturation: "저채도" },
+      { thumbnailId: "th_3c", label: "C", hasFace: false, faceEmotion: null, fontPosition: "하단", keywords: ["완성", "꿀맛", "공개"], saturation: "고채도" },
+      { thumbnailId: "th_3d", label: "D", hasFace: false, faceEmotion: null, fontPosition: "전체", keywords: ["공개", "황금"], saturation: "저채도" },
+    ],
+  },
+  test_c1: {
+    id: "test_c1",
+    title: "롤 월드컵 결승 예측",
+    status: "COMPLETED",
+    totalVotes: 512,
+    thumbnails: [
+      { id: "th_c1a", label: "A", fileUrl: "/api/placeholder/1280/720", voteCount: 329, ctr: 64.2, ci: 2.9, note: "선수 클로즈업 + 대결 구도" },
+      { id: "th_c1b", label: "B", fileUrl: "/api/placeholder/1280/720", voteCount: 183, ctr: 35.8, ci: 2.7, note: "팀 로고 중심 정보형" },
+    ],
+    demographicData: {
+      gender: { M: { A: 70, B: 30 }, F: { A: 55, B: 45 } },
+      ageGroups: { "10s": { A: 75, B: 25 }, "20s": { A: 68, B: 32 }, "30s": { A: 60, B: 40 }, "40s": { A: 50, B: 50 } },
+    },
+    timeSeriesData: Array.from({ length: 24 }, (_, i) => ({ hour: i, A: Math.round(8 + i * 13.8), B: Math.round(4 + i * 7.5) })),
+    analysis: [
+      { thumbnailId: "th_c1a", label: "A", hasFace: true, faceEmotion: "긴장", fontPosition: "좌상단", keywords: ["월드컵", "결승", "예측"], saturation: "고채도" },
+      { thumbnailId: "th_c1b", label: "B", hasFace: false, faceEmotion: null, fontPosition: "중앙", keywords: ["팀", "대결", "로고"], saturation: "중채도" },
+    ],
+  },
+  test_c2: {
+    id: "test_c2",
+    title: "봄 데일리 메이크업 루틴",
+    status: "COMPLETED",
+    totalVotes: 389,
+    thumbnails: [
+      { id: "th_c2a", label: "A", fileUrl: "/api/placeholder/1280/720", voteCount: 110, ctr: 28.2, ci: 2.6, note: "파스텔 배경 + 제품 나열" },
+      { id: "th_c2b", label: "B", fileUrl: "/api/placeholder/1280/720", voteCount: 279, ctr: 71.8, ci: 2.9, note: "자연광 셀피 + 봄 색감" },
+    ],
+    demographicData: {
+      gender: { M: { A: 55, B: 45 }, F: { A: 22, B: 78 } },
+      ageGroups: { "10s": { A: 25, B: 75 }, "20s": { A: 20, B: 80 }, "30s": { A: 35, B: 65 }, "40s": { A: 42, B: 58 } },
+    },
+    timeSeriesData: Array.from({ length: 24 }, (_, i) => ({ hour: i, A: Math.round(4 + i * 4.6), B: Math.round(8 + i * 11.6) })),
+    analysis: [
+      { thumbnailId: "th_c2a", label: "A", hasFace: false, faceEmotion: null, fontPosition: "중앙", keywords: ["봄", "루틴", "데일리"], saturation: "저채도" },
+      { thumbnailId: "th_c2b", label: "B", hasFace: true, faceEmotion: "미소", fontPosition: "우측", keywords: ["봄", "자연광", "메이크업"], saturation: "고채도" },
+    ],
+  },
 };
 
 export type CalendarEvent = {
