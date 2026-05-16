@@ -2,36 +2,41 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Clock, Search } from "lucide-react";
+import { Check, Clock, Search } from "lucide-react";
 import { getTestFeed, submitVote } from "@/lib/api-client";
+import { supabase } from "@/lib/supabase";
 import { testerId } from "@/lib/fixtures";
 import { ViewerCategories } from "@/lib/schemas";
 import type { HomeSummary, Scorecard, ThumbnailOption, ThumbnailTest } from "@/lib/types";
 import { createAppSessionId, createDeviceFingerprint } from "@/lib/utils";
 
-const HOME_SUMMARY_CACHE_KEY = "thumbgosu_home_summary";
-const SCORECARD_CACHE_KEY = "thumbgosu_scorecard";
+// 계정별 localStorage 키 생성
+function uidKey(base: string, uid: string | null) {
+  return uid ? `${base}_${uid}` : base;
+}
 
-function applyVoteToCache(rewardCoins: number) {
+function applyVoteToCache(rewardCoins: number, uid: string | null) {
   try {
-    const rawHome = localStorage.getItem(HOME_SUMMARY_CACHE_KEY);
+    const homeKey = uidKey("thumbgosu_home_summary", uid);
+    const rawHome = localStorage.getItem(homeKey);
     if (rawHome) {
       const home = JSON.parse(rawHome) as HomeSummary;
       home.todayTests = (home.todayTests ?? 0) + 1;
       home.totalVotes = (home.totalVotes ?? 0) + 1;
       home.coinBalance = (home.coinBalance ?? 0) + rewardCoins;
       home.todayEarned = (home.todayEarned ?? 0) + rewardCoins;
-      localStorage.setItem(HOME_SUMMARY_CACHE_KEY, JSON.stringify(home));
+      localStorage.setItem(homeKey, JSON.stringify(home));
     }
   } catch {}
 
   try {
-    const rawScore = localStorage.getItem(SCORECARD_CACHE_KEY);
+    const scorecardKey = uidKey("thumbgosu_scorecard", uid);
+    const rawScore = localStorage.getItem(scorecardKey);
     if (rawScore) {
       const score = JSON.parse(rawScore) as Scorecard;
       score.totalVotes = (score.totalVotes ?? 0) + 1;
       score.nextGradeVotes = Math.max(0, (score.nextGradeVotes ?? 1) - 1);
-      localStorage.setItem(SCORECARD_CACHE_KEY, JSON.stringify(score));
+      localStorage.setItem(scorecardKey, JSON.stringify(score));
     }
   } catch {}
 }
@@ -42,11 +47,11 @@ function shuffle<T>(items: T[]) {
   return [...items].sort(() => Math.random() - 0.5);
 }
 
-function getTodayCount(): number {
+function getTodayCount(uid: string | null): number {
   if (typeof window === "undefined") return 0;
   const today = new Date().toDateString();
   try {
-    const stored = localStorage.getItem("thumbgosu_daily");
+    const stored = localStorage.getItem(uidKey("thumbgosu_daily", uid));
     if (!stored) return 0;
     const { date, count } = JSON.parse(stored) as { date: string; count: number };
     return date === today ? count : 0;
@@ -55,10 +60,10 @@ function getTodayCount(): number {
   }
 }
 
-function incrementTodayCount() {
+function incrementTodayCount(uid: string | null) {
   const today = new Date().toDateString();
-  const newCount = getTodayCount() + 1;
-  localStorage.setItem("thumbgosu_daily", JSON.stringify({ date: today, count: newCount }));
+  const newCount = getTodayCount(uid) + 1;
+  localStorage.setItem(uidKey("thumbgosu_daily", uid), JSON.stringify({ date: today, count: newCount }));
   return newCount;
 }
 
@@ -66,10 +71,14 @@ function VideoCard({
   thumbnail,
   onSelect,
   disabled,
+  isSelected,
+  isDimmed,
 }: {
   thumbnail: ThumbnailOption;
   onSelect: (event: React.MouseEvent<HTMLButtonElement>) => void;
   disabled: boolean;
+  isSelected?: boolean;
+  isDimmed?: boolean;
 }) {
   return (
     <button
@@ -77,13 +86,24 @@ function VideoCard({
       onClick={onSelect}
       disabled={disabled}
       type="button"
+      style={{
+        opacity: isDimmed ? 0.35 : 1,
+        transition: "opacity 0.2s",
+      }}
     >
-      <div className="aspect-video w-full overflow-hidden rounded-xl bg-gray-100">
+      <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-gray-100">
         <img
           alt=""
           src={thumbnail.imageUrl}
           className="h-full w-full object-cover transition duration-150 group-active:brightness-90"
         />
+        {isSelected && (
+          <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-green-500/20">
+            <div className="check-pop flex items-center justify-center rounded-full bg-green-500 p-4 shadow-xl shadow-green-500/40">
+              <Check className="size-10 text-white" strokeWidth={3} />
+            </div>
+          </div>
+        )}
       </div>
       <div className="mt-3 flex gap-3 px-0.5">
         <div className="mt-0.5 size-9 shrink-0 rounded-full bg-gradient-to-br from-red-500 to-gray-800" />
@@ -106,14 +126,23 @@ export function TestFeed() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [todayCount, setTodayCount] = useState(0);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [coinEffect, setCoinEffect] = useState<{ x: number; y: number; coins: number; key: number } | null>(null);
   const startTimeRef = useRef<number>(0);
   const appSessionIdRef = useRef<string>("00000000-0000-4000-8000-000000000000");
   const deviceFingerprintRef = useRef<string>("server-fixture-device");
+  const userUidRef = useRef<string | null>(null);
 
   useEffect(() => {
     appSessionIdRef.current = createAppSessionId();
     deviceFingerprintRef.current = createDeviceFingerprint();
-    setTodayCount(getTodayCount());
+
+    // 계정별 UID 로드 후 일일 카운트 반영
+    supabase.auth.getUser().then(({ data }) => {
+      userUidRef.current = data.user?.id ?? null;
+      setTodayCount(getTodayCount(userUidRef.current));
+    });
+
     void getTestFeed().then((feed) => {
       setTests(feed);
       setLoading(false);
@@ -137,10 +166,20 @@ export function TestFeed() {
     const responseTimeMs = Date.now() - startTimeRef.current;
     setSubmitting(true);
 
-    const newCount = incrementTodayCount();
+    // 클릭 이펙트 즉시 표시
+    setSelectedId(thumbnailId);
+    setCoinEffect({
+      x: event.clientX,
+      y: event.clientY,
+      coins: currentTest.rewardCoins,
+      key: Date.now(),
+    });
+
+    const uid = userUidRef.current;
+    const newCount = incrementTodayCount(uid);
     setTodayCount(newCount);
 
-    await submitVote({
+    const result = await submitVote({
       testId: currentTest.id,
       testerId,
       chosenThumbnailId: thumbnailId,
@@ -152,13 +191,16 @@ export function TestFeed() {
       clientTimestamp: new Date().toISOString(),
     });
 
-    // 홈 요약 및 성적표 캐시 즉시 반영
-    applyVoteToCache(currentTest.rewardCoins);
+    // 홈 요약 및 성적표 캐시 즉시 반영 (투표 성공 시만)
+    if (result.accepted) {
+      applyVoteToCache(result.awardedCoins ?? currentTest.rewardCoins, uid);
+    }
 
     window.setTimeout(() => {
       setSubmitting(false);
+      setSelectedId(null);
       setIndex((current) => current + 1);
-    }, 300);
+    }, 650);
   };
 
   // 로딩 중
@@ -266,10 +308,23 @@ export function TestFeed() {
             key={thumbnail.id}
             thumbnail={thumbnail}
             disabled={submitting}
+            isSelected={selectedId === thumbnail.id}
+            isDimmed={selectedId !== null && selectedId !== thumbnail.id}
             onSelect={(event) => void handleSelect(thumbnail.id, event)}
           />
         ))}
       </div>
+
+      {/* 코인 플로팅 이펙트 */}
+      {coinEffect && (
+        <div
+          key={coinEffect.key}
+          className="coin-pop pointer-events-none fixed z-50 rounded-full bg-yellow-400 px-3 py-1.5 text-sm font-black text-gray-900 shadow-lg"
+          style={{ left: coinEffect.x, top: coinEffect.y - 16 }}
+        >
+          +{coinEffect.coins} 코인
+        </div>
+      )}
     </div>
   );
 }

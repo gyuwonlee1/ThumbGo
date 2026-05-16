@@ -5,6 +5,7 @@ import { Award, Calendar, Target, TrendingUp } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { getScorecard } from "@/lib/api-client";
+import { supabase } from "@/lib/supabase";
 import { scorecard as fixtureScorecard } from "@/lib/fixtures";
 import { cn } from "@/lib/utils";
 import type { Scorecard } from "@/lib/types";
@@ -13,22 +14,36 @@ export const SCORECARD_CACHE_KEY = "thumbgosu_scorecard";
 
 const weekLabels = ["월", "화", "수", "목", "금", "토", "일"];
 
+const GRADE_STARTS: Record<string, number> = { C: 0, B: 50, A: 150, S: 300 };
+const GRADE_ENDS: Record<string, number> = { C: 50, B: 150, A: 300, S: 999 };
+
+function gradeProgress(grade: string, totalVotes: number): number {
+  const start = GRADE_STARTS[grade] ?? 0;
+  const end = GRADE_ENDS[grade] ?? 50;
+  return Math.min(100, Math.round(((totalVotes - start) / (end - start)) * 100));
+}
+
 export default function ScorecardPage() {
   const [score, setScore] = useState<Scorecard>(fixtureScorecard);
 
   useEffect(() => {
-    // 캐시된 데이터 즉시 표시
-    try {
-      const cached = localStorage.getItem(SCORECARD_CACHE_KEY);
-      if (cached) setScore(JSON.parse(cached) as Scorecard);
-    } catch {}
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data.user?.id ?? null;
+      const cacheKey = uid ? `${SCORECARD_CACHE_KEY}_${uid}` : SCORECARD_CACHE_KEY;
 
-    // 최신 데이터 fetch 및 캐시 갱신
-    getScorecard().then((data) => {
-      setScore(data);
+      // 계정별 캐시 즉시 표시
       try {
-        localStorage.setItem(SCORECARD_CACHE_KEY, JSON.stringify(data));
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) setScore(JSON.parse(cached) as Scorecard);
       } catch {}
+
+      // 최신 데이터 fetch 및 캐시 갱신
+      getScorecard().then((fresh) => {
+        setScore(fresh);
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(fresh));
+        } catch {}
+      });
     });
   }, []);
 
@@ -56,7 +71,10 @@ export default function ScorecardPage() {
               <span className="font-bold">{score.nextGradeVotes}표</span>
             </div>
             <div className="mt-2 h-2 rounded-full bg-white/20">
-              <div className="h-full w-[68%] rounded-full bg-white" />
+              <div
+                className="h-full rounded-full bg-white transition-all duration-500"
+                style={{ width: `${gradeProgress(score.grade, score.totalVotes)}%` }}
+              />
             </div>
           </div>
         </div>

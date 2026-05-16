@@ -6,6 +6,7 @@ import { Bell, BarChart3, Sparkles, TrendingUp, Users } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { getHomeSummary } from "@/lib/api-client";
+import { supabase } from "@/lib/supabase";
 import { homeSummary as fixtureSummary } from "@/lib/fixtures";
 import { formatCoins } from "@/lib/utils";
 import type { HomeSummary } from "@/lib/types";
@@ -16,18 +17,23 @@ export default function HomePage() {
   const [summary, setSummary] = useState<HomeSummary>(fixtureSummary);
 
   useEffect(() => {
-    // 캐시된 데이터 즉시 표시
-    try {
-      const cached = localStorage.getItem(HOME_SUMMARY_CACHE_KEY);
-      if (cached) setSummary(JSON.parse(cached) as HomeSummary);
-    } catch {}
+    supabase.auth.getUser().then(({ data }) => {
+      const uid = data.user?.id ?? null;
+      const cacheKey = uid ? `${HOME_SUMMARY_CACHE_KEY}_${uid}` : HOME_SUMMARY_CACHE_KEY;
 
-    // 최신 데이터 fetch 및 캐시 갱신
-    getHomeSummary().then((data) => {
-      setSummary(data);
+      // 계정별 캐시 즉시 표시
       try {
-        localStorage.setItem(HOME_SUMMARY_CACHE_KEY, JSON.stringify(data));
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) setSummary(JSON.parse(cached) as HomeSummary);
       } catch {}
+
+      // 최신 데이터 fetch 및 캐시 갱신
+      getHomeSummary().then((fresh) => {
+        setSummary(fresh);
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify(fresh));
+        } catch {}
+      });
     });
   }, []);
 
@@ -72,7 +78,7 @@ export default function HomePage() {
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold text-gray-950">오늘의 영상</h2>
           <span className="text-sm font-semibold text-red-600">
-            {summary.todayTests}개 대기 중
+            {Math.max(0, 5 - summary.todayTests)}개 남음
           </span>
         </div>
         <Link
