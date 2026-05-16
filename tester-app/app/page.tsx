@@ -11,10 +11,16 @@ import { formatCoins } from "@/lib/utils";
 import type { HomeSummary } from "@/lib/types";
 
 const initialSummary: HomeSummary = {
-  ...fixtureSummary,
+  nickname: "",
+  coinBalance: 0,
   todayEarned: 0,
   todayTests: 0,
+  hitRate: 0,
+  grade: "C",
   totalVotes: 0,
+  streakDays: 0,
+  referralCode: "",
+  activeUsersLabel: "데이터를 불러오는 중...",
 };
 
 export default function HomePage() {

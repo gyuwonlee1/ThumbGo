@@ -5,7 +5,6 @@ import { Award, Calendar, Target, TrendingUp } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { getScorecard } from "@/lib/api-client";
-import { scorecard as fixtureScorecard } from "@/lib/fixtures";
 import { cn } from "@/lib/utils";
 import type { Scorecard } from "@/lib/types";
 
@@ -21,8 +20,11 @@ function gradeProgress(grade: string, totalVotes: number): number {
 }
 
 const initialScorecard: Scorecard = {
-  ...fixtureScorecard,
+  hitRate: 0,
+  averageResponseSeconds: 0,
+  weeklyHitRate: [0, 0, 0, 0, 0, 0, 0],
   grade: "C",
+  gradeTrend: ["C", "C", "C", "C", "C"],
   reliabilityScore: 0,
   totalVotes: 0,
   nextGradeVotes: 50,
@@ -112,61 +114,6 @@ export default function ScorecardPage() {
             </div>
           );
         })}
-      </section>
-
-      <section className="px-4 pt-6">
-        <h2 className="mb-3 text-base font-bold text-gray-950">주간 적중률</h2>
-        <div className="rounded-xl bg-gray-50 p-4">
-          <div className="flex h-36 items-end justify-between gap-2">
-            {score.weeklyHitRate.map((value, index) => (
-              <div className="flex flex-1 flex-col items-center gap-2" key={weekLabels[index]}>
-                <div className="flex w-full items-end rounded-t bg-red-100">
-                  <div
-                    className="w-full rounded-t bg-red-600"
-                    style={{ height: `${value}%` }}
-                  />
-                </div>
-                <span className="text-xs text-gray-500">{weekLabels[index]}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="px-4 pt-6">
-        <h2 className="mb-3 text-base font-bold text-gray-950">신뢰도 등급 추이</h2>
-        <div className="flex items-center justify-between rounded-xl bg-gray-50 p-4">
-          {score.gradeTrend.map((grade, index) => (
-            <div className="flex flex-1 items-center" key={`${grade}-${index}`}>
-              <div className="grid size-9 place-items-center rounded-full bg-white text-sm font-black text-red-600 shadow-sm">
-                {grade}
-              </div>
-              {index < score.gradeTrend.length - 1 ? (
-                <div className="h-0.5 flex-1 bg-gray-200" />
-              ) : null}
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="px-4 py-6">
-        <h2 className="mb-3 text-base font-bold text-gray-950">카테고리별 응답 분포</h2>
-        <div className="space-y-3 rounded-xl bg-gray-50 p-4">
-          {score.categories.map((item) => (
-            <div key={item.name}>
-              <div className="mb-1 flex items-center justify-between">
-                <span className="text-sm text-gray-700">{item.name}</span>
-                <span className="text-sm font-bold text-gray-950">{item.count}개</span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-                <div
-                  className={cn("h-full rounded-full", item.color)}
-                  style={{ width: `${(item.count / 45) * 100}%` }}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
       </section>
     </AppShell>
   );
