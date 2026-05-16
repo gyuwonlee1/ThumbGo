@@ -1,13 +1,36 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Award, Calendar, Target, TrendingUp } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { getScorecard } from "@/lib/api-client";
+import { scorecard as fixtureScorecard } from "@/lib/fixtures";
 import { cn } from "@/lib/utils";
+import type { Scorecard } from "@/lib/types";
+
+export const SCORECARD_CACHE_KEY = "thumbgosu_scorecard";
 
 const weekLabels = ["월", "화", "수", "목", "금", "토", "일"];
 
-export default async function ScorecardPage() {
-  const score = await getScorecard();
+export default function ScorecardPage() {
+  const [score, setScore] = useState<Scorecard>(fixtureScorecard);
+
+  useEffect(() => {
+    // 캐시된 데이터 즉시 표시
+    try {
+      const cached = localStorage.getItem(SCORECARD_CACHE_KEY);
+      if (cached) setScore(JSON.parse(cached) as Scorecard);
+    } catch {}
+
+    // 최신 데이터 fetch 및 캐시 갱신
+    getScorecard().then((data) => {
+      setScore(data);
+      try {
+        localStorage.setItem(SCORECARD_CACHE_KEY, JSON.stringify(data));
+      } catch {}
+    });
+  }, []);
 
   return (
     <AppShell>

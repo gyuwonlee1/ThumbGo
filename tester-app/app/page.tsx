@@ -1,12 +1,35 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, BarChart3, Sparkles, TrendingUp, Users } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { getHomeSummary } from "@/lib/api-client";
+import { homeSummary as fixtureSummary } from "@/lib/fixtures";
 import { formatCoins } from "@/lib/utils";
+import type { HomeSummary } from "@/lib/types";
 
-export default async function HomePage() {
-  const summary = await getHomeSummary();
+export const HOME_SUMMARY_CACHE_KEY = "thumbgosu_home_summary";
+
+export default function HomePage() {
+  const [summary, setSummary] = useState<HomeSummary>(fixtureSummary);
+
+  useEffect(() => {
+    // 캐시된 데이터 즉시 표시
+    try {
+      const cached = localStorage.getItem(HOME_SUMMARY_CACHE_KEY);
+      if (cached) setSummary(JSON.parse(cached) as HomeSummary);
+    } catch {}
+
+    // 최신 데이터 fetch 및 캐시 갱신
+    getHomeSummary().then((data) => {
+      setSummary(data);
+      try {
+        localStorage.setItem(HOME_SUMMARY_CACHE_KEY, JSON.stringify(data));
+      } catch {}
+    });
+  }, []);
 
   return (
     <AppShell>

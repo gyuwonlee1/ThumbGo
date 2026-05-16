@@ -6,8 +6,35 @@ import { Clock, Search } from "lucide-react";
 import { getTestFeed, submitVote } from "@/lib/api-client";
 import { testerId } from "@/lib/fixtures";
 import { ViewerCategories } from "@/lib/schemas";
-import type { ThumbnailOption, ThumbnailTest } from "@/lib/types";
+import type { HomeSummary, Scorecard, ThumbnailOption, ThumbnailTest } from "@/lib/types";
 import { createAppSessionId, createDeviceFingerprint } from "@/lib/utils";
+
+const HOME_SUMMARY_CACHE_KEY = "thumbgosu_home_summary";
+const SCORECARD_CACHE_KEY = "thumbgosu_scorecard";
+
+function applyVoteToCache(rewardCoins: number) {
+  try {
+    const rawHome = localStorage.getItem(HOME_SUMMARY_CACHE_KEY);
+    if (rawHome) {
+      const home = JSON.parse(rawHome) as HomeSummary;
+      home.todayTests = (home.todayTests ?? 0) + 1;
+      home.totalVotes = (home.totalVotes ?? 0) + 1;
+      home.coinBalance = (home.coinBalance ?? 0) + rewardCoins;
+      home.todayEarned = (home.todayEarned ?? 0) + rewardCoins;
+      localStorage.setItem(HOME_SUMMARY_CACHE_KEY, JSON.stringify(home));
+    }
+  } catch {}
+
+  try {
+    const rawScore = localStorage.getItem(SCORECARD_CACHE_KEY);
+    if (rawScore) {
+      const score = JSON.parse(rawScore) as Scorecard;
+      score.totalVotes = (score.totalVotes ?? 0) + 1;
+      score.nextGradeVotes = Math.max(0, (score.nextGradeVotes ?? 1) - 1);
+      localStorage.setItem(SCORECARD_CACHE_KEY, JSON.stringify(score));
+    }
+  } catch {}
+}
 
 const DAILY_LIMIT = 5;
 
@@ -124,6 +151,9 @@ export function TestFeed() {
       deviceFingerprint: deviceFingerprintRef.current,
       clientTimestamp: new Date().toISOString(),
     });
+
+    // 홈 요약 및 성적표 캐시 즉시 반영
+    applyVoteToCache(currentTest.rewardCoins);
 
     window.setTimeout(() => {
       setSubmitting(false);
