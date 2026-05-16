@@ -59,7 +59,7 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
 
   const THUMBNAIL_LABELS = ["A", "B", "C", "D"];
   const matchCount = Math.round(1240 * (selectedGenders.length / 2) * (selectedAges.length / 5));
-  const estimatedCredits = Math.ceil((endType === "MANUAL" ? 300 : voteTarget) / 100);
+  const estimatedCredits = endType === "MANUAL" ? null : Math.ceil(voteTarget / 100);
 
   const addThumbnail = () => {
     if (thumbnails.length < 4) {
@@ -446,13 +446,25 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
                   {[
                     { label: "썸네일 후보", value: `${thumbnails.length}개` },
                     { label: "예상 매칭 인원", value: `${matchCount.toLocaleString()}명` },
-                    { label: "예상 소요 크레딧", value: `${estimatedCredits} 크레딧` },
                   ].map((r) => (
                     <div key={r.label} className="flex items-center justify-between">
                       <span className="text-xs text-slate-500">{r.label}</span>
                       <span className="text-xs font-semibold text-slate-900">{r.value}</span>
                     </div>
                   ))}
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-slate-500">크레딧 차감</span>
+                    {estimatedCredits !== null ? (
+                      <span className="text-xs font-semibold text-slate-900">{estimatedCredits} 크레딧</span>
+                    ) : (
+                      <span className="text-xs font-semibold text-amber-600">종료 후 실제 투표 수 기준 정산</span>
+                    )}
+                  </div>
+                  {endType === "MANUAL" && (
+                    <p className="text-[11px] text-slate-400 pt-1 leading-relaxed">
+                      수동 종료 시 실제 집계된 투표 수 기준으로 크레딧이 차감됩니다. (100표당 1크레딧)
+                    </p>
+                  )}
                 </div>
               </CardContent>
             </Card>
