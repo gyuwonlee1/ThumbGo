@@ -3,14 +3,14 @@ import { z } from "zod";
 export const ViewerCategories = [
   "게임",
   "뷰티",
-  "푸드",
+  "음식",
   "브이로그",
   "교육",
-  "IT·테크",
+  "테크",
   "키즈",
   "음악",
   "스포츠",
-  "엔터·예능"
+  "엔터테인먼트"
 ] as const;
 
 export const TesterProfileSchema = z.object({
@@ -22,8 +22,6 @@ export const TesterProfileSchema = z.object({
     .min(1940)
     .max(new Date().getFullYear() - 13),
   categories: z.array(z.string()).min(3).max(5),
-  dailyWatchTime: z.enum(["<30m", "~1h", "~2h", "3h+"]),
-  device: z.enum(["MOBILE", "PC", "TV", "MIXED"])
 });
 
 export const VoteSubmitSchema = z.object({
@@ -43,7 +41,7 @@ export const WithdrawRequestSchema = z.object({
   amount: z.number().int().min(5000),
   accountHolder: z.string().min(2).optional(),
   bankName: z.string().optional(),
-  accountNumber: z.string().optional()
+  accountNumber: z.string().optional(),
 });
 
 export const NotificationPreferenceSchema = z.object({

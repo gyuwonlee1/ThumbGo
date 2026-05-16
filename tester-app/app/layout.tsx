@@ -3,7 +3,7 @@ import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "ThumbLab Tester",
+  title: "썸네일고수",
   description: "썸네일을 고르고 코인을 적립하는 리워드 테스트 앱"
 };
 
