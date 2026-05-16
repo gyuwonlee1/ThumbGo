@@ -106,10 +106,10 @@ export function Sidebar() {
       <div className="mx-3 mb-3 rounded-xl bg-gradient-to-br from-indigo-900 to-indigo-800 p-3 border border-indigo-700">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-semibold text-indigo-200">남은 크레딧</span>
-          <span className="text-sm font-bold text-white">47</span>
+          <span className="text-sm font-bold text-white">11</span>
         </div>
         <div className="h-1.5 rounded-full bg-indigo-700/50 overflow-hidden">
-          <div className="h-full w-[47%] rounded-full bg-indigo-400" />
+          <div className="h-full w-[69%] rounded-full bg-indigo-400" />
         </div>
         <Link
           href="/billing"
