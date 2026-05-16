@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Agency {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  plan      Plan     @default(FREE)
+  credits   Int      @default(3)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members  Member[]
+  channels Channel[]
+  invoices Invoice[]
+}
+
+model Member {
+  id       String     @id @default(cuid())
+  agencyId String
+  userId   String
+  role     MemberRole @default(EDITOR)
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([agencyId, userId])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  members  Member[]
+  accounts Account[]
+  sessions Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Channel {
+  id               String          @id @default(cuid())
+  agencyId         String
+  youtubeChannelId String?
+  name             String
+  category         ChannelCategory
+  subscriberCount  Int             @default(0)
+  avgViewCount     Int             @default(0)
+  thumbnailUrl     String?
+  description      String?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  agency   Agency    @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+  tests    Test[]
+  insights Insight[]
+
+  @@unique([agencyId, youtubeChannelId])
+}
+
+model Test {
+  id                  String           @id @default(cuid())
+  channelId           String
+  title               String
+  scheduledUploadDate DateTime?
+  status              TestStatus       @default(PENDING)
+  endConditionType    EndConditionType
+  endConditionVotes   Int?
+  endConditionHours   Int?
+  totalVotes          Int              @default(0)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  endedAt             DateTime?
+
+  channel    Channel     @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  thumbnails Thumbnail[]
+  votes      Vote[]
+  audience   Audience?
+}
+
+model Thumbnail {
+  id        String   @id @default(cuid())
+  testId    String
+  label     String
+  fileUrl   String
+  note      String?
+  voteCount Int      @default(0)
+  ctr       Float    @default(0)
+  createdAt DateTime @default(now())
+
+  test     Test               @relation(fields: [testId], references: [id], onDelete: Cascade)
+  votes    Vote[]
+  analysis ThumbnailAnalysis?
+}
+
+model ThumbnailAnalysis {
+  id              String   @id @default(cuid())
+  thumbnailId     String   @unique
+  keywords        String[]
+  fontPosition    String?
+  fontSizeRatio   Float?
+  hasFace         Boolean  @default(false)
+  faceEmotion     String?
+  saturation      Float?
+  brightness      Float?
+  infoScore       Float?
+  isQuestionTitle Boolean  @default(false)
+  createdAt       DateTime @default(now())
+
+  thumbnail Thumbnail @relation(fields: [thumbnailId], references: [id], onDelete: Cascade)
+}
+
+model Audience {
+  id         String   @id @default(cuid())
+  testId     String   @unique
+  genders    String[]
+  ageGroups  String[]
+  categories String[]
+  matchCount Int      @default(0)
+
+  test Test @relation(fields: [testId], references: [id], onDelete: Cascade)
+}
+
+model Vote {
+  id          String   @id @default(cuid())
+  testId      String
+  thumbnailId String
+  testerId    String
+  dwellTime   Int?
+  createdAt   DateTime @default(now())
+
+  test      Test      @relation(fields: [testId], references: [id], onDelete: Cascade)
+  thumbnail Thumbnail @relation(fields: [thumbnailId], references: [id], onDelete: Cascade)
+
+  @@unique([testId, testerId])
+}
+
+model Insight {
+  id        String   @id @default(cuid())
+  channelId String
+  data      Json
+  period    String
+  createdAt DateTime @default(now())
+
+  channel Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id        String        @id @default(cuid())
+  agencyId  String
+  amount    Int
+  status    InvoiceStatus @default(PENDING)
+  paidAt    DateTime?
+  createdAt DateTime      @default(now())
+
+  agency Agency @relation(fields: [agencyId], references: [id], onDelete: Cascade)
+}
+
+enum Plan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum MemberRole {
+  OWNER
+  ADMIN
+  EDITOR
+  VIEWER
+}
+
+enum ChannelCategory {
+  GAMING
+  BEAUTY
+  FOOD
+  VLOG
+  EDUCATION
+  TECH
+  KIDS
+  MUSIC
+  SPORTS
+  ENTERTAINMENT
+  ETC
+}
+
+enum TestStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum EndConditionType {
+  MANUAL
+  VOTE_COUNT
+  DURATION
+  FIRST_OF
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  FAILED
+}
