@@ -1,39 +1,14 @@
 {
-  "name": "thumblab-tester-ui",
+  "name": "thumbgo",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "workspaces": [
+    "apps/*"
+  ],
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint .",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@capacitor/android": "^8.0.0",
-    "@capacitor/cli": "^8.0.0",
-    "@capacitor/core": "^8.0.0",
-    "@capacitor/ios": "^8.0.0",
-    "clsx": "^2.1.1",
-    "lucide-react": "^0.487.0",
-    "next": "^16.1.5",
-    "react": "^19.2.4",
-    "react-dom": "^19.2.4",
-    "tailwind-merge": "^3.2.0",
-    "zod": "^3.25.76"
-  },
-  "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.12",
-    "@testing-library/react": "^16.3.0",
-    "@types/node": "^24.0.0",
-    "@types/react": "^19.2.0",
-    "@types/react-dom": "^19.2.0",
-    "eslint": "^9.20.0",
-    "eslint-config-next": "^16.1.5",
-    "jsdom": "^26.1.0",
-    "tailwindcss": "^4.1.12",
-    "typescript": "^5.8.0",
-    "vitest": "^3.2.4"
+    "dev:tester": "npm run dev -w apps/tester-app",
+    "build:tester": "npm run build -w apps/tester-app",
+    "lint:tester": "npm run lint -w apps/tester-app",
+    "test:tester": "npm run test -w apps/tester-app"
   }
 }
