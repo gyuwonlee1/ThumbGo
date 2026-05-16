@@ -120,10 +120,10 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="border-t border-slate-800 p-3 space-y-0.5">
-        <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+        <Link href="/settings/profile#notifications" className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
           <Bell className="h-4 w-4" />
           알림
-        </button>
+        </Link>
         <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-400 hover:text-red-400 hover:bg-slate-800 transition-colors">
           <LogOut className="h-4 w-4" />
           로그아웃

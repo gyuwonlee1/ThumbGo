@@ -32,7 +32,6 @@ const END_CONDITIONS = [
   { id: "FIRST_OF", label: "먼저 도달하는 조건", desc: "투표 수 또는 기간 중 먼저 충족되면 종료됩니다." },
 ];
 
-const VOTE_PRESETS = [100, 300, 500, 1000];
 const DURATION_PRESETS = [24, 48, 72, 168];
 
 type Thumbnail = { label: string; file: File | null; note: string; preview: string | null };
@@ -60,7 +59,7 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
 
   const THUMBNAIL_LABELS = ["A", "B", "C", "D"];
   const matchCount = Math.round(1240 * (selectedGenders.length / 2) * (selectedAges.length / 5));
-  const estimatedCredits = Math.ceil((thumbnails.length * (endType === "MANUAL" ? 300 : voteTarget)) / 100);
+  const estimatedCredits = Math.ceil((endType === "MANUAL" ? 300 : voteTarget) / 100);
 
   const addThumbnail = () => {
     if (thumbnails.length < 4) {
@@ -398,21 +397,24 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
 
                 {/* Vote Count Setting */}
                 {(endType === "VOTE_COUNT" || endType === "FIRST_OF") && (
-                  <div className="space-y-2 animate-fade-in">
-                    <label className="text-sm font-medium text-slate-700">목표 투표 수</label>
-                    <div className="flex gap-2">
-                      {VOTE_PRESETS.map((v) => (
-                        <button
-                          key={v}
-                          onClick={() => setVoteTarget(v)}
-                          className={cn(
-                            "flex-1 h-9 rounded-lg text-sm font-medium transition-all",
-                            voteTarget === v ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-                          )}
-                        >
-                          {v}표
-                        </button>
-                      ))}
+                  <div className="space-y-3 animate-fade-in">
+                    <div className="flex items-center justify-between">
+                      <label className="text-sm font-medium text-slate-700">목표 투표 수</label>
+                      <span className="text-sm font-bold text-indigo-600">{voteTarget.toLocaleString()}표</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={100}
+                      max={1000}
+                      step={100}
+                      value={voteTarget}
+                      onChange={(e) => setVoteTarget(Number(e.target.value))}
+                      className="w-full h-2 rounded-full appearance-none cursor-pointer accent-indigo-600 bg-slate-200"
+                    />
+                    <div className="flex justify-between text-[11px] text-slate-400">
+                      <span>100표</span>
+                      <span>500표</span>
+                      <span>1,000표</span>
                     </div>
                   </div>
                 )}

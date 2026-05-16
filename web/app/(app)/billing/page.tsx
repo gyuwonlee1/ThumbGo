@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, CreditCard, Download, Zap, TrendingUp } from "lucide-react";
+import { CheckCircle2, CreditCard, Zap, TrendingUp } from "lucide-react";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -14,10 +14,10 @@ const PLANS = [
     id: "FREE",
     name: "무료",
     price: 0,
-    credits: 3,
+    credits: 10,
     channels: 2,
     members: 1,
-    features: ["월 3회 테스트", "채널 2개", "기본 결과 분석"],
+    features: ["월 10 크레딧", "채널 2개", "기본 결과 분석"],
     color: "border-slate-200",
     badge: null,
   },
@@ -28,7 +28,7 @@ const PLANS = [
     credits: 30,
     channels: 10,
     members: 3,
-    features: ["월 30회 테스트", "채널 10개", "AI 썸네일 분석", "채널 인사이트", "팀 멤버 3명"],
+    features: ["월 30 크레딧", "채널 10개", "AI 썸네일 분석", "채널 인사이트", "팀 멤버 3명"],
     color: "border-indigo-500",
     badge: "현재 플랜",
   },
@@ -39,7 +39,7 @@ const PLANS = [
     credits: 100,
     channels: 999,
     members: 999,
-    features: ["월 100회 테스트", "채널 무제한", "AI 전체 분석", "API 연동", "팀 멤버 무제한"],
+    features: ["월 100 크레딧", "채널 무제한", "AI 전체 분석", "API 연동", "팀 멤버 무제한"],
     color: "border-purple-300",
     badge: "추천",
   },
@@ -66,12 +66,11 @@ export default function BillingPage() {
       <Header title="요금제 · 결제" description="플랜 및 사용 내역 관리" />
       <main className="flex-1 p-6 space-y-6">
         {/* Current Plan Overview */}
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-3 gap-4">
           {[
             { label: "현재 플랜", value: "Starter", sub: "월 79,000원", color: "text-indigo-600 bg-indigo-50" },
-            { label: "남은 크레딧", value: "47", sub: "/ 100 이번 달", color: "text-emerald-600 bg-emerald-50" },
             { label: "다음 결제일", value: "2026-06-01", sub: "자동 결제", color: "text-amber-600 bg-amber-50" },
-            { label: "이번 달 테스트", value: "30건", sub: "30 / 30 사용", color: "text-slate-600 bg-slate-100" },
+            { label: "이번달 테스트 총 건수", value: "30건", sub: `${USAGE_BY_CHANNEL.reduce((s, c) => s + c.tests, 0)}건 누적 사용`, color: "text-slate-600 bg-slate-100" },
           ].map((item) => (
             <Card key={item.label}>
               <CardContent className="p-5">
@@ -136,16 +135,14 @@ export default function BillingPage() {
             <h2 className="text-sm font-semibold text-slate-700 mt-6">채널별 사용 내역</h2>
             <Card>
               <CardContent className="p-5 space-y-4">
-                <div className="grid grid-cols-3 text-xs font-semibold text-slate-500 pb-2 border-b border-slate-100">
+                <div className="grid grid-cols-2 text-xs font-semibold text-slate-500 pb-2 border-b border-slate-100">
                   <span>채널</span>
-                  <span className="text-center">테스트 수</span>
                   <span className="text-right">사용 크레딧</span>
                 </div>
                 {USAGE_BY_CHANNEL.map((ch) => (
                   <div key={ch.name} className="space-y-1.5">
-                    <div className="grid grid-cols-3 text-sm items-center">
+                    <div className="grid grid-cols-2 text-sm items-center">
                       <span className="font-medium text-slate-800">{ch.name}</span>
-                      <span className="text-center text-slate-600">{ch.tests}건</span>
                       <span className="text-right font-semibold text-slate-900">{ch.credits} 크레딧</span>
                     </div>
                     <Progress
@@ -204,13 +201,7 @@ export default function BillingPage() {
                         <p className="text-sm font-medium text-slate-900">{inv.plan} 플랜</p>
                         <p className="text-xs text-slate-400">{inv.date}</p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-slate-900">₩{inv.amount.toLocaleString()}</p>
-                        <button className="text-[10px] text-indigo-600 hover:underline flex items-center gap-0.5 ml-auto mt-0.5">
-                          <Download className="h-2.5 w-2.5" />
-                          PDF
-                        </button>
-                      </div>
+                      <p className="text-sm font-bold text-slate-900">₩{inv.amount.toLocaleString()}</p>
                     </div>
                   ))}
                 </div>

@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Search, MoreVertical, FlaskConical, TrendingUp, Trash2, Edit } from "lucide-react";
+import { Plus, Search, FlaskConical, Trash2 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { mockChannels } from "@/lib/mock-data";
+import { mockChannels, addMockChannel } from "@/lib/mock-data";
 import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/schemas/channel";
 import { formatNumber } from "@/lib/utils";
 
@@ -31,10 +31,22 @@ export default function ChannelsPage() {
   const [search, setSearch] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("GAMING");
+  const [newChannelName, setNewChannelName] = useState("");
+  const [, setTick] = useState(0);
 
   const filtered = mockChannels.filter((ch) =>
     ch.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleAddChannel = () => {
+    if (!newChannelName.trim()) return;
+    addMockChannel({ name: newChannelName.trim(), category: selectedCategory });
+    setNewChannelName("");
+    setSelectedCategory("GAMING");
+    setShowAddModal(false);
+    setTick((t) => t + 1);
+  };
 
   return (
     <div className="flex flex-col min-h-full">
@@ -163,7 +175,7 @@ export default function ChannelsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="px-6 py-2 space-y-4">
-            <Input label="채널 이름" placeholder="예: 게임왕 채널" />
+            <Input label="채널 이름" placeholder="예: 게임왕 채널" value={newChannelName} onChange={(e) => setNewChannelName(e.target.value)} />
             <Input label="YouTube 채널 ID (선택)" placeholder="UCxxxxxxxxxxxxxxxx" hint="입력 시 구독자 수 자동 가져오기" />
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-slate-700">카테고리</label>
@@ -171,8 +183,9 @@ export default function ChannelsPage() {
                 {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
                   <button
                     key={key}
+                    onClick={() => setSelectedCategory(key)}
                     className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
-                      key === "GAMING"
+                      selectedCategory === key
                         ? "border-indigo-500 bg-indigo-50 text-indigo-700"
                         : "border-slate-200 text-slate-600 hover:border-slate-300"
                     }`}
@@ -187,7 +200,7 @@ export default function ChannelsPage() {
             <DialogClose asChild>
               <Button variant="outline">취소</Button>
             </DialogClose>
-            <Button onClick={() => setShowAddModal(false)}>
+            <Button onClick={handleAddChannel} disabled={!newChannelName.trim()}>
               <Plus className="h-4 w-4" />
               채널 추가
             </Button>

@@ -4,7 +4,7 @@ import { use } from "react";
 import { Brain, TrendingUp, Users, BarChart3, Lightbulb } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockChannels } from "@/lib/mock-data";
+import { mockChannels, mockChannelInsights } from "@/lib/mock-data";
 import { CATEGORY_LABELS } from "@/lib/schemas/channel";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -44,16 +44,11 @@ const radarData = [
   { subject: "질문형 제목", A: 60 },
 ];
 
-const recommendations = [
-  "이 채널 시청자는 **인물 등장 + 좌상단 텍스트 + 채널 주인의 놀란 표정** 조합에 가장 강하게 반응합니다.",
-  "**고채도·원색 계열** 배경이 저채도 대비 평균 1.7배 높은 CTR을 보입니다.",
-  "텍스트는 **2~3단어 핵심 키워드**만 사용할 때 정보 과부하 없이 클릭률이 높습니다.",
-  "**10~20대 남성** 타깃 영상은 놀란 표정이, **30대 이상**에게는 정보형 레이아웃이 더 효과적입니다.",
-];
-
 export default function ChannelInsightsPage({ params }: { params: Promise<{ channelId: string }> }) {
   const { channelId } = use(params);
   const channel = mockChannels.find((c) => c.id === channelId) ?? mockChannels[0];
+  const insights = mockChannelInsights[channelId] ?? mockChannelInsights["ch_1"];
+  const { recommendations, bestTestTitle, bestCTR } = insights;
 
   return (
     <div className="flex flex-col min-h-full">
@@ -189,9 +184,9 @@ export default function ChannelInsightsPage({ params }: { params: Promise<{ chan
               <CardContent className="p-4 space-y-3">
                 {[
                   { label: "평균 CTR", value: "62.3%", trend: "+10.8%p (3개월)" },
-                  { label: "총 테스트", value: "18건", trend: "3개월 누적" },
-                  { label: "분석 시안 수", value: "47개", trend: "전체 썸네일" },
-                  { label: "최고 CTR 시안", value: "76.4%", trend: "시안 A (롤 월드컵)" },
+                  { label: "총 테스트", value: `${channel.totalTests}건`, trend: "3개월 누적" },
+                  { label: "분석 시안 수", value: `${channel.totalTests * 2 + 11}개`, trend: "전체 썸네일" },
+                  { label: "최고 CTR 시안", value: bestCTR, trend: `시안 A (${bestTestTitle})` },
                 ].map((s) => (
                   <div key={s.label} className="flex items-center justify-between">
                     <div>

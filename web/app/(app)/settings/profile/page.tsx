@@ -1,13 +1,31 @@
 "use client";
 
+import { useState, useRef } from "react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Camera, Key, Bell, Globe } from "lucide-react";
+import { Camera, Key, Bell } from "lucide-react";
 
 export default function ProfileSettingsPage() {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [notifications, setNotifications] = useState({
+    testComplete: true,
+    deadline: true,
+    uploadSchedule: false,
+    lowCredit: true,
+  });
+
+  const toggleNotif = (key: keyof typeof notifications) =>
+    setNotifications((prev) => ({ ...prev, [key]: !prev[key] }));
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) setAvatarUrl(URL.createObjectURL(file));
+  };
+
   return (
     <div className="flex flex-col min-h-full">
       <Header title="프로필 설정" description="계정 정보 및 환경 설정" />
@@ -21,12 +39,27 @@ export default function ProfileSettingsPage() {
             <CardContent className="space-y-5">
               <div className="flex items-center gap-5">
                 <div className="relative">
-                  <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-2xl">
-                    김
-                  </div>
-                  <button className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-indigo-600 flex items-center justify-center text-white hover:bg-indigo-700 transition-colors">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="프로필" className="h-16 w-16 rounded-2xl object-cover" />
+                  ) : (
+                    <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-2xl">
+                      김
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full bg-indigo-600 flex items-center justify-center text-white hover:bg-indigo-700 transition-colors"
+                  >
                     <Camera className="h-3 w-3" />
                   </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={handleAvatarChange}
+                  />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-900">김민준</p>
@@ -68,22 +101,24 @@ export default function ProfileSettingsPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[
-                { label: "테스트 완료 알림", desc: "테스트가 자동 종료되면 이메일로 알림", default: true },
-                { label: "마감 임박 알림", desc: "테스트 마감 2시간 전 알림", default: true },
-                { label: "업로드 일정 알림", desc: "예정 업로드일 24시간 전 알림", default: false },
-                { label: "크레딧 부족 알림", desc: "남은 크레딧이 5개 이하일 때 알림", default: true },
-              ].map((notif) => (
-                <div key={notif.label} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
+              {([
+                { key: "testComplete",    label: "테스트 완료 알림", desc: "테스트가 자동 종료되면 이메일로 알림" },
+                { key: "deadline",        label: "마감 임박 알림",   desc: "테스트 마감 2시간 전 알림" },
+                { key: "uploadSchedule",  label: "업로드 일정 알림", desc: "예정 업로드일 24시간 전 알림" },
+                { key: "lowCredit",       label: "크레딧 부족 알림", desc: "남은 크레딧이 5개 이하일 때 알림" },
+              ] as const).map((notif) => (
+                <div key={notif.key} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
                   <div>
                     <p className="text-sm font-medium text-slate-900">{notif.label}</p>
                     <p className="text-xs text-slate-400 mt-0.5">{notif.desc}</p>
                   </div>
-                  <div
-                    className={`h-6 w-11 rounded-full transition-colors cursor-pointer ${notif.default ? "bg-indigo-600" : "bg-slate-200"}`}
+                  <button
+                    type="button"
+                    onClick={() => toggleNotif(notif.key)}
+                    className={`h-6 w-11 rounded-full transition-colors ${notifications[notif.key] ? "bg-indigo-600" : "bg-slate-200"}`}
                   >
-                    <div className={`h-5 w-5 rounded-full bg-white shadow-sm mt-0.5 transition-transform ${notif.default ? "translate-x-5" : "translate-x-0.5"}`} />
-                  </div>
+                    <div className={`h-5 w-5 rounded-full bg-white shadow-sm mt-0.5 transition-transform ${notifications[notif.key] ? "translate-x-5" : "translate-x-0.5"}`} />
+                  </button>
                 </div>
               ))}
             </CardContent>

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
-import { mockChannels, mockActiveTests, mockCompletedTests } from "@/lib/mock-data";
+import { mockChannels, mockActiveTests, mockCompletedTests, mockCalendarEvents } from "@/lib/mock-data";
 import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/schemas/channel";
 import { formatNumber, formatDate, timeUntil } from "@/lib/utils";
 
@@ -17,7 +17,10 @@ export default function ChannelDetailPage({ params }: { params: Promise<{ channe
   const { channelId } = use(params);
   const channel = mockChannels.find((c) => c.id === channelId) ?? mockChannels[0];
   const activeTests = mockActiveTests.filter((t) => t.channelId === channelId);
-  const completedTests = mockCompletedTests;
+  const completedTests = mockCompletedTests.filter((t) => t.channelId === channelId);
+  const scheduledUploads = mockCalendarEvents.filter(
+    (e) => e.channelId === channelId && e.type === "upload"
+  );
 
   return (
     <div className="flex flex-col min-h-full">
@@ -177,12 +180,8 @@ export default function ChannelDetailPage({ params }: { params: Promise<{ channe
           <TabsContent value="scheduled">
             <Card>
               <CardContent className="p-5 space-y-3">
-                {[
-                  { title: "롤 시즌 14 격변 리뷰", date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 2), hasTest: true },
-                  { title: "M4 맥북 프로 언박싱", date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5), hasTest: false },
-                  { title: "월간 인기 게임 TOP10", date: new Date(Date.now() + 1000 * 60 * 60 * 24 * 9), hasTest: false },
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-4 p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
+                {scheduledUploads.map((item) => (
+                  <div key={item.id} className="flex items-center gap-4 p-3 rounded-xl border border-slate-100 hover:border-slate-200 transition-colors">
                     <div className="h-10 w-10 rounded-lg bg-blue-50 flex items-center justify-center shrink-0">
                       <Calendar className="h-5 w-5 text-blue-500" />
                     </div>

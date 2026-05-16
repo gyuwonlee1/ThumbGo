@@ -1,25 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ChevronLeft, ChevronRight, Upload, Clock, CheckCircle2 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { mockCalendarEvents, mockChannels, CalendarEvent } from "@/lib/mock-data";
 
-const CHANNELS = ["전체", "게임왕 채널", "뷰티 by 소연", "테크리뷰 마스터", "맛있는 하루"];
-
-const EVENTS = [
-  { date: "2026-05-18", type: "upload", title: "롤 시즌 리뷰", channel: "게임왕 채널" },
-  { date: "2026-05-19", type: "deadline", title: "가을 메이크업 썸네일 마감", channel: "뷰티 by 소연" },
-  { date: "2026-05-20", type: "completed", title: "간장게장 레시피 테스트 완료", channel: "맛있는 하루" },
-  { date: "2026-05-21", type: "upload", title: "M4 맥북 프로 리뷰", channel: "테크리뷰 마스터" },
-  { date: "2026-05-22", type: "deadline", title: "게임 TOP10 썸네일 마감", channel: "게임왕 채널" },
-  { date: "2026-05-25", type: "upload", title: "부산 여행 브이로그", channel: "뷰티 by 소연" },
-  { date: "2026-05-27", type: "completed", title: "테크 썸네일 A/B 완료", channel: "테크리뷰 마스터" },
-  { date: "2026-05-29", type: "upload", title: "삼겹살 완벽 굽기", channel: "맛있는 하루" },
-  { date: "2026-05-30", type: "deadline", title: "6월 기획 썸네일 마감", channel: "게임왕 채널" },
-];
+const CHANNEL_NAMES = ["전체", ...mockChannels.map((c) => c.name)];
 
 const EVENT_CONFIG = {
   upload: { color: "bg-blue-500", label: "업로드 예정", icon: Upload },
@@ -45,16 +34,18 @@ export default function CalendarPage() {
   const daysInMonth = getDaysInMonth(year, month);
   const firstDay = getFirstDayOfMonth(year, month);
 
-  const filteredEvents = EVENTS.filter(
-    (e) => selectedChannel === "전체" || e.channel === selectedChannel
+  const filteredEvents = mockCalendarEvents.filter(
+    (e: CalendarEvent) => selectedChannel === "전체" || e.channelName === selectedChannel
   );
 
   const getEventsForDate = (day: number) => {
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    return filteredEvents.filter((e) => e.date === dateStr);
+    return filteredEvents.filter((e: CalendarEvent) => e.date === dateStr);
   };
 
-  const selectedEvents = selectedDate ? filteredEvents.filter((e) => e.date === selectedDate) : [];
+  const selectedEvents = selectedDate
+    ? filteredEvents.filter((e: CalendarEvent) => e.date === selectedDate)
+    : [];
 
   const prevMonth = () => setCurrentDate(new Date(year, month - 1, 1));
   const nextMonth = () => setCurrentDate(new Date(year, month + 1, 1));
@@ -83,8 +74,8 @@ export default function CalendarPage() {
                 </button>
               </div>
               {/* Channel Filter */}
-              <div className="flex gap-2">
-                {CHANNELS.map((ch) => (
+              <div className="flex gap-2 flex-wrap">
+                {CHANNEL_NAMES.map((ch) => (
                   <button
                     key={ch}
                     onClick={() => setSelectedChannel(ch)}
@@ -127,11 +118,9 @@ export default function CalendarPage() {
                 </div>
                 {/* Days */}
                 <div className="grid grid-cols-7 gap-px bg-slate-100 rounded-xl overflow-hidden">
-                  {/* Empty cells */}
                   {[...Array(firstDay)].map((_, i) => (
                     <div key={`empty-${i}`} className="bg-slate-50 min-h-[80px]" />
                   ))}
-                  {/* Day cells */}
                   {[...Array(daysInMonth)].map((_, i) => {
                     const day = i + 1;
                     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
@@ -157,7 +146,7 @@ export default function CalendarPage() {
                           {day}
                         </div>
                         <div className="space-y-0.5">
-                          {dayEvents.slice(0, 2).map((ev, j) => {
+                          {dayEvents.slice(0, 2).map((ev: CalendarEvent, j: number) => {
                             const cfg = EVENT_CONFIG[ev.type as keyof typeof EVENT_CONFIG];
                             return (
                               <div key={j} className={`text-[9px] px-1.5 py-0.5 rounded ${cfg.color} text-white truncate`}>
@@ -188,22 +177,26 @@ export default function CalendarPage() {
                   <p className="text-xs text-slate-400 py-4 text-center">이 날짜에 일정이 없습니다.</p>
                 ) : (
                   <div className="space-y-3">
-                    {selectedEvents.map((ev, i) => {
+                    {selectedEvents.map((ev: CalendarEvent, i: number) => {
                       const cfg = EVENT_CONFIG[ev.type as keyof typeof EVENT_CONFIG];
                       const Icon = cfg.icon;
                       return (
-                        <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-slate-50">
+                        <Link
+                          key={i}
+                          href={`/channels/${ev.channelId}`}
+                          className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 transition-colors cursor-pointer"
+                        >
                           <div className={`h-7 w-7 rounded-lg ${cfg.color} flex items-center justify-center shrink-0`}>
                             <Icon className="h-3.5 w-3.5 text-white" />
                           </div>
                           <div>
                             <p className="text-xs font-medium text-slate-900">{ev.title}</p>
-                            <p className="text-[10px] text-slate-400 mt-0.5">{ev.channel}</p>
+                            <p className="text-[10px] text-slate-400 mt-0.5">{ev.channelName}</p>
                             <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${cfg.color} text-white font-medium mt-1 inline-block`}>
                               {cfg.label}
                             </span>
                           </div>
-                        </div>
+                        </Link>
                       );
                     })}
                   </div>
@@ -214,10 +207,10 @@ export default function CalendarPage() {
             {/* Monthly Summary */}
             <Card>
               <CardContent className="p-4">
-                <p className="text-sm font-semibold text-slate-700 mb-3">5월 요약</p>
+                <p className="text-sm font-semibold text-slate-700 mb-3">{MONTH_LABELS[month]} 요약</p>
                 <div className="space-y-2.5">
                   {Object.entries(EVENT_CONFIG).map(([key, cfg]) => {
-                    const count = filteredEvents.filter((e) => e.type === key).length;
+                    const count = filteredEvents.filter((e: CalendarEvent) => e.type === key).length;
                     const Icon = cfg.icon;
                     return (
                       <div key={key} className="flex items-center gap-2">

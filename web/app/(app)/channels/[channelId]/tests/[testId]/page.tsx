@@ -2,7 +2,7 @@
 
 import { use } from "react";
 import Link from "next/link";
-import { Trophy, Download, RefreshCw, Users, TrendingUp, Brain } from "lucide-react";
+import { Trophy, RefreshCw, Users, TrendingUp, Brain } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,11 +41,7 @@ export default function TestResultPage({ params }: { params: Promise<{ channelId
             </p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" size="md">
-              <Download className="h-4 w-4" />
-              PDF 내보내기
-            </Button>
-            <Button variant="secondary" size="md" asChild>
+<Button variant="secondary" size="md" asChild>
               <Link href={`/channels/${channelId}/tests/new`}>
                 <RefreshCw className="h-4 w-4" />
                 유사 조건 재테스트

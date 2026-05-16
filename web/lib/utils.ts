@@ -47,6 +47,6 @@ export function calculateCTR(votes: number, total: number): number {
   return Math.round((votes / total) * 1000) / 10;
 }
 
-export function creditCost(thumbnailCount: number, voteTarget: number): number {
-  return Math.ceil((thumbnailCount * voteTarget) / 100);
+export function creditCost(voteTarget: number): number {
+  return Math.ceil(voteTarget / 100);
 }

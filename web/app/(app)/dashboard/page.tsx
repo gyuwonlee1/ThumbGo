@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import {
   MonitorPlay, FlaskConical, Upload, Coins, Plus,
@@ -7,8 +10,10 @@ import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { mockChannels, mockUpcomingEvents, mockActiveTests } from "@/lib/mock-data";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { mockChannels, mockUpcomingEvents, mockActiveTests, addMockChannel } from "@/lib/mock-data";
 import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/schemas/channel";
 import { formatNumber, timeUntil } from "@/lib/utils";
 
@@ -30,6 +35,20 @@ function getEventBadge(type: string) {
 }
 
 export default function DashboardPage() {
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("GAMING");
+  const [newChannelName, setNewChannelName] = useState("");
+  const [, setTick] = useState(0);
+
+  const handleAddChannel = () => {
+    if (!newChannelName.trim()) return;
+    addMockChannel({ name: newChannelName.trim(), category: selectedCategory });
+    setNewChannelName("");
+    setSelectedCategory("GAMING");
+    setShowAddModal(false);
+    setTick((t) => t + 1);
+  };
+
   return (
     <div className="flex flex-col min-h-full">
       <Header
@@ -106,7 +125,7 @@ export default function DashboardPage() {
                 </Link>
               ))}
               {/* Add Channel Card */}
-              <Link href="/channels">
+              <button onClick={() => setShowAddModal(true)} className="text-left">
                 <Card className="border-dashed hover:border-indigo-300 hover:bg-indigo-50/50 transition-all duration-200 cursor-pointer">
                   <CardContent className="p-4 flex items-center justify-center h-full min-h-[88px]">
                     <div className="text-center">
@@ -117,7 +136,7 @@ export default function DashboardPage() {
                     </div>
                   </CardContent>
                 </Card>
-              </Link>
+              </button>
             </div>
 
             {/* Active Tests */}
@@ -232,6 +251,49 @@ export default function DashboardPage() {
           </div>
         </div>
       </main>
+
+      {/* Add Channel Modal */}
+      <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>새 채널 연결</DialogTitle>
+            <DialogDescription>
+              YouTube 채널 정보를 입력하거나 채널 ID로 자동 가져오기 하세요.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-6 py-2 space-y-4">
+            <Input label="채널 이름" placeholder="예: 게임왕 채널" value={newChannelName} onChange={(e) => setNewChannelName(e.target.value)} />
+            <Input label="YouTube 채널 ID (선택)" placeholder="UCxxxxxxxxxxxxxxxx" hint="입력 시 구독자 수 자동 가져오기" />
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-slate-700">카테고리</label>
+              <div className="grid grid-cols-3 gap-2">
+                {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedCategory(key)}
+                    className={`text-xs px-3 py-2 rounded-lg border transition-colors ${
+                      selectedCategory === key
+                        ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+                        : "border-slate-200 text-slate-600 hover:border-slate-300"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">취소</Button>
+            </DialogClose>
+            <Button onClick={handleAddChannel} disabled={!newChannelName.trim()}>
+              <Plus className="h-4 w-4" />
+              채널 추가
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
