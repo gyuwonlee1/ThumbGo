@@ -29,26 +29,18 @@ import type {
   ThumbnailTest,
 } from "./types";
 
-// ─── DailyWatchTime enum 매핑 ─────────────────
-const WATCH_TIME_MAP: Record<string, string> = {
-  "<30m": "UNDER_30M",
-  "~1h": "ABOUT_1H",
-  "~2h": "ABOUT_2H",
-  "3h+": "OVER_3H",
-};
-
 // ─── Category 한글 → DB enum 매핑 ─────────────
 const CATEGORY_TO_ENUM: Record<string, string> = {
   "게임": "GAMING",
   "뷰티": "BEAUTY",
-  "푸드": "FOOD",
+  "음식": "FOOD",
   "브이로그": "VLOG",
   "교육": "EDUCATION",
-  "IT·테크": "TECH",
+  "테크": "TECH",
   "키즈": "KIDS",
   "음악": "MUSIC",
   "스포츠": "SPORTS",
-  "엔터·예능": "ENTERTAINMENT",
+  "엔터테인먼트": "ENTERTAINMENT",
 };
 
 const ENUM_TO_CATEGORY: Record<string, string> = Object.fromEntries(
@@ -91,8 +83,6 @@ export async function saveProfile(payload: TesterProfileInput) {
         gender: parsed.gender,
         birthYear: parsed.birthYear,
         categories: dbCategories,
-        dailyWatchTime: WATCH_TIME_MAP[parsed.dailyWatchTime] ?? parsed.dailyWatchTime,
-        device: parsed.device,
       },
       { onConflict: "authUid" }
     )
@@ -105,6 +95,36 @@ export async function saveProfile(payload: TesterProfileInput) {
   }
 
   return { saved: true, testerId: data.id };
+}
+
+// ─── 프로필 조회 ──────────────────────────────
+export async function getMyProfile(): Promise<{
+  nickname: string;
+  gender: "M" | "F" | "UNDISCLOSED";
+  birthYear: number;
+  categories: string[];
+} | null> {
+  const user = await getUser();
+  if (!user) return null;
+
+  const { data } = await supabase
+    .from("Tester")
+    .select("nickname, gender, birthYear, categories")
+    .eq("authUid", user.id)
+    .single();
+
+  if (!data) return null;
+
+  const categories = (data.categories as string[]).map(
+    (e) => ENUM_TO_CATEGORY[e] ?? e
+  );
+
+  return {
+    nickname: data.nickname,
+    gender: data.gender as "M" | "F" | "UNDISCLOSED",
+    birthYear: data.birthYear,
+    categories,
+  };
 }
 
 // ─── 홈 요약 ──────────────────────────────────
