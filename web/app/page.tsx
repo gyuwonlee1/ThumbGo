@@ -77,7 +77,7 @@ const testimonials = [
     name: "김지훈",
     role: "콘텐츠 디렉터 · ABC 크리에이터즈",
     avatar: "김",
-    text: "업로드 후 CTR이 기대치를 못 미쳐서 다시 만드는 경우가 잦았는데, ThumbLab 도입 후 첫 영상부터 목표 CTR을 달성했습니다.",
+    text: "업로드 후 CTR이 기대치를 못 미쳐서 다시 만드는 경우가 잦았는데, 썸네일고수 도입 후 첫 영상부터 목표 CTR을 달성했습니다.",
   },
   {
     name: "이소연",
@@ -103,7 +103,7 @@ export default function LandingPage() {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600">
               <Zap className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-slate-900">ThumbLab</span>
+            <span className="font-bold text-slate-900">썸네일고수</span>
             <span className="text-xs text-slate-400 font-medium bg-slate-100 px-1.5 py-0.5 rounded">for Agencies</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-slate-600">
@@ -167,7 +167,7 @@ export default function LandingPage() {
               <div className="h-3 w-3 rounded-full bg-yellow-400" />
               <div className="h-3 w-3 rounded-full bg-green-400" />
               <div className="mx-4 flex-1 h-5 rounded-full bg-white/60 flex items-center px-3">
-                <span className="text-xs text-slate-400">thumblab.io/dashboard</span>
+                <span className="text-xs text-slate-400">thumbgosu.io/dashboard</span>
               </div>
             </div>
             {/* Mock Dashboard */}
@@ -178,7 +178,7 @@ export default function LandingPage() {
                   <div className="h-6 w-6 rounded bg-indigo-600 flex items-center justify-center">
                     <Zap className="h-3 w-3 text-white" />
                   </div>
-                  <span className="text-xs font-bold text-white">ThumbLab</span>
+                  <span className="text-xs font-bold text-white">썸네일고수</span>
                 </div>
                 {["대시보드", "채널 관리", "일정 캘린더", "요금제"].map((item, i) => (
                   <div key={i} className={`rounded-lg px-3 py-1.5 text-xs ${i === 0 ? "bg-indigo-600 text-white" : "text-slate-400"}`}>
@@ -379,9 +379,9 @@ export default function LandingPage() {
             <div className="flex h-6 w-6 items-center justify-center rounded bg-indigo-600">
               <Zap className="h-3 w-3 text-white" />
             </div>
-            <span className="text-sm font-bold text-slate-900">ThumbLab</span>
+            <span className="text-sm font-bold text-slate-900">썸네일고수</span>
           </div>
-          <p className="text-sm text-slate-400">© 2026 ThumbLab. All rights reserved.</p>
+          <p className="text-sm text-slate-400">© 2026 썸네일고수. All rights reserved.</p>
           <div className="flex gap-6 text-sm text-slate-400">
             <a href="#" className="hover:text-slate-600">개인정보처리방침</a>
             <a href="#" className="hover:text-slate-600">이용약관</a>

@@ -14,11 +14,11 @@ export default function LoginPage() {
           <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center">
             <Zap className="h-4 w-4 text-white" />
           </div>
-          <span className="font-bold text-white">ThumbLab</span>
+          <span className="font-bold text-white">썸네일고수</span>
         </Link>
         <div>
           <blockquote className="text-xl font-medium text-white leading-relaxed mb-4">
-            "ThumbLab 도입 후 썸네일 재작업 비용이 40% 줄었습니다. 데이터로 의사결정하는 것이 이렇게 간단할 줄 몰랐어요."
+            "썸네일고수 도입 후 썸네일 재작업 비용이 40% 줄었습니다. 데이터로 의사결정하는 것이 이렇게 간단할 줄 몰랐어요."
           </blockquote>
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold">
@@ -30,7 +30,7 @@ export default function LoginPage() {
             </div>
           </div>
         </div>
-        <p className="text-xs text-slate-500">© 2026 ThumbLab</p>
+        <p className="text-xs text-slate-500">© 2026 썸네일고수</p>
       </div>
 
       {/* Right Panel */}
@@ -41,7 +41,7 @@ export default function LoginPage() {
               <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center">
                 <Zap className="h-3.5 w-3.5 text-white" />
               </div>
-              <span className="font-bold text-slate-900">ThumbLab</span>
+              <span className="font-bold text-slate-900">썸네일고수</span>
             </Link>
             <h1 className="text-2xl font-bold text-slate-900">다시 오셨군요!</h1>
             <p className="text-sm text-slate-500 mt-1">에이전시 계정으로 로그인하세요.</p>

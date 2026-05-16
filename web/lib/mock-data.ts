@@ -86,7 +86,24 @@ export const mockUpcomingEvents = [
   },
 ];
 
-export const mockActiveTests = [
+export type ActiveTest = {
+  id: string;
+  channelId: string;
+  channelName: string;
+  title: string;
+  thumbnailCount: number;
+  totalVotes: number;
+  targetVotes: number;
+  status: string;
+  endConditionType: string;
+  deadline: Date;
+};
+
+export function addMockActiveTest(test: ActiveTest) {
+  mockActiveTests.unshift(test);
+}
+
+export const mockActiveTests: ActiveTest[] = [
   {
     id: "test_1",
     channelId: "ch_1",

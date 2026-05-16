@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { use } from "react";
-import { Plus, BarChart3, FlaskConical, Calendar, ChevronRight, Clock, Trophy, Eye } from "lucide-react";
+import { Plus, BarChart3, FlaskConical, Calendar, Clock, Trophy } from "lucide-react";
 import { Header } from "@/components/layout/header";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -12,12 +12,11 @@ import { Progress } from "@/components/ui/progress";
 import { mockChannels, mockActiveTests, mockCompletedTests } from "@/lib/mock-data";
 import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/schemas/channel";
 import { formatNumber, formatDate, timeUntil } from "@/lib/utils";
-import { TEST_STATUS_COLORS } from "@/lib/schemas/test";
 
 export default function ChannelDetailPage({ params }: { params: Promise<{ channelId: string }> }) {
   const { channelId } = use(params);
   const channel = mockChannels.find((c) => c.id === channelId) ?? mockChannels[0];
-  const activeTests = mockActiveTests.filter((t) => t.channelId === channelId || true).slice(0, 3);
+  const activeTests = mockActiveTests.filter((t) => t.channelId === channelId);
   const completedTests = mockCompletedTests;
 
   return (

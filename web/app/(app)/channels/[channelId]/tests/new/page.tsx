@@ -5,15 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ChevronLeft, ChevronRight, Upload, X, Check,
-  Users, Clock, Target, Zap, AlertCircle, ImagePlus
+  Users, Target, Zap, ImagePlus
 } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { mockChannels } from "@/lib/mock-data";
-import { CATEGORY_LABELS } from "@/lib/schemas/channel";
+import { mockChannels, addMockActiveTest } from "@/lib/mock-data";
+import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/schemas/channel";
 import { cn } from "@/lib/utils";
 
 const STEPS = [
@@ -55,6 +54,7 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
   const [endType, setEndType] = useState("VOTE_COUNT");
   const [voteTarget, setVoteTarget] = useState(300);
   const [durationHours, setDurationHours] = useState(48);
+  const [selectedCategory, setSelectedCategory] = useState<string>(channel.category);
   const [isDragging, setIsDragging] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -96,6 +96,24 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
   const handleSubmit = async () => {
     setSubmitting(true);
     await new Promise((r) => setTimeout(r, 1200));
+
+    const deadline = endType === "DURATION" || endType === "FIRST_OF"
+      ? new Date(Date.now() + durationHours * 60 * 60 * 1000)
+      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+    addMockActiveTest({
+      id: `test_${Date.now()}`,
+      channelId,
+      channelName: channel.name,
+      title,
+      thumbnailCount: thumbnails.length,
+      totalVotes: 0,
+      targetVotes: endType === "MANUAL" ? 300 : voteTarget,
+      status: "ACTIVE",
+      endConditionType: endType,
+      deadline,
+    });
+
     router.push(`/channels/${channelId}`);
   };
 
@@ -107,7 +125,6 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
           {/* Step Indicator */}
           <div className="flex items-center mb-8">
             {STEPS.map((s, i) => {
-              const Icon = s.icon;
               const isCompleted = step > s.id;
               const isCurrent = step === s.id;
               return (
@@ -162,13 +179,27 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
                   onChange={(e) => setUploadDate(e.target.value)}
                   hint="캘린더에 일정으로 표시됩니다."
                 />
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">카테고리</label>
+                <div className="space-y-2">
                   <div className="flex items-center gap-2">
-                    <span className={`text-sm px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 font-medium`}>
-                      {CATEGORY_LABELS[channel.category]}
-                    </span>
-                    <span className="text-xs text-slate-400">채널에서 자동 상속됨 · 변경 가능</span>
+                    <label className="text-sm font-medium text-slate-700">카테고리</label>
+                    <span className="text-xs text-slate-400">채널 기본값에서 변경 가능</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => setSelectedCategory(key)}
+                        className={cn(
+                          "px-3 py-1.5 rounded-lg text-sm font-medium border-2 transition-all",
+                          selectedCategory === key
+                            ? `${CATEGORY_COLORS[key]} border-current`
+                            : "border-slate-200 text-slate-500 hover:border-slate-300 bg-white"
+                        )}
+                      >
+                        {label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </CardContent>

@@ -21,7 +21,7 @@ export default function SignupPage() {
           <div className="h-8 w-8 rounded-lg bg-white/20 flex items-center justify-center">
             <Zap className="h-4 w-4 text-white" />
           </div>
-          <span className="font-bold text-white">ThumbLab</span>
+          <span className="font-bold text-white">썸네일고수</span>
         </Link>
         <div>
           <h2 className="text-2xl font-bold text-white mb-2">무료로 시작하세요</h2>
@@ -35,7 +35,7 @@ export default function SignupPage() {
             ))}
           </ul>
         </div>
-        <p className="text-xs text-indigo-400">© 2026 ThumbLab</p>
+        <p className="text-xs text-indigo-400">© 2026 썸네일고수</p>
       </div>
 
       {/* Right */}
@@ -46,7 +46,7 @@ export default function SignupPage() {
               <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center">
                 <Zap className="h-3.5 w-3.5 text-white" />
               </div>
-              <span className="font-bold text-slate-900">ThumbLab</span>
+              <span className="font-bold text-slate-900">썸네일고수</span>
             </Link>
             <h1 className="text-2xl font-bold text-slate-900">에이전시 계정 만들기</h1>
             <p className="text-sm text-slate-500 mt-1">팀 전체가 사용할 수 있는 에이전시 계정입니다.</p>
