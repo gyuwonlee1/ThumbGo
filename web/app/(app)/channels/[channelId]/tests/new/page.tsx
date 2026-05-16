@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { mockChannels, addMockActiveTest } from "@/lib/mock-data";
 import { CATEGORY_LABELS, CATEGORY_COLORS } from "@/lib/schemas/channel";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
+import { uploadThumbnail } from "@/lib/upload";
 
 const STEPS = [
   { id: 1, label: "기본 정보", icon: Zap },
@@ -56,6 +58,7 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
   const [selectedCategory, setSelectedCategory] = useState<string>(channel.category);
   const [isDragging, setIsDragging] = useState<number | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const THUMBNAIL_LABELS = ["A", "B", "C", "D"];
   const matchCount = Math.round(1240 * (selectedGenders.length / 2) * (selectedAges.length / 5));
@@ -94,26 +97,141 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
 
   const handleSubmit = async () => {
     setSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1200));
+    setSubmitError(null);
 
-    const deadline = endType === "DURATION" || endType === "FIRST_OF"
-      ? new Date(Date.now() + durationHours * 60 * 60 * 1000)
-      : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    try {
+      // ── 1. 채널이 Supabase에 없으면 생성 ──────────
+      const { data: existingChannel } = await supabase
+        .from("Channel")
+        .select("id")
+        .eq("id", channelId)
+        .maybeSingle();
 
-    addMockActiveTest({
-      id: `test_${Date.now()}`,
-      channelId,
-      channelName: channel.name,
-      title,
-      thumbnailCount: thumbnails.length,
-      totalVotes: 0,
-      targetVotes: endType === "MANUAL" ? 300 : voteTarget,
-      status: "ACTIVE",
-      endConditionType: endType,
-      deadline,
-    });
+      if (!existingChannel) {
+        // Agency 확인/생성
+        const defaultAgencyId = "agency_default";
+        const { data: existingAgency } = await supabase
+          .from("Agency")
+          .select("id")
+          .eq("id", defaultAgencyId)
+          .maybeSingle();
 
-    router.push(`/channels/${channelId}`);
+        if (!existingAgency) {
+          await supabase.from("Agency").insert({
+            id: defaultAgencyId,
+            name: "기본 에이전시",
+            email: "admin@thumbgosu.io",
+            plan: "FREE",
+            credits: 100,
+          });
+        }
+
+        await supabase.from("Channel").insert({
+          id: channelId,
+          agencyId: defaultAgencyId,
+          name: channel.name,
+          category: channel.category,
+          subscriberCount: channel.subscriberCount,
+          avgViewCount: channel.avgViewCount,
+        });
+      }
+
+      // ── 2. Test 레코드 생성 ───────────────────────
+      const endConditionVotes =
+        endType === "VOTE_COUNT" || endType === "FIRST_OF" ? voteTarget : null;
+      const endConditionHours =
+        endType === "DURATION" || endType === "FIRST_OF" ? durationHours : null;
+
+      const testId = crypto.randomUUID();
+
+      const { data: testRecord, error: testError } = await supabase
+        .from("Test")
+        .insert({
+          id: testId,
+          channelId,
+          title,
+          scheduledUploadDate: uploadDate || null,
+          status: "ACTIVE",
+          endConditionType: endType,
+          endConditionVotes,
+          endConditionHours,
+          totalVotes: 0,
+        })
+        .select("id")
+        .single();
+
+      if (testError || !testRecord) {
+        throw new Error(`테스트 생성 실패: ${testError?.message ?? "Unknown error"}`);
+      }
+
+      // ── 3. 썸네일 Storage 업로드 + DB 레코드 생성 ──
+      const thumbnailInserts = [];
+      for (const thumb of thumbnails) {
+        let fileUrl = "";
+        if (thumb.file) {
+          fileUrl = await uploadThumbnail(thumb.file, testId, thumb.label);
+        }
+        thumbnailInserts.push({
+          id: crypto.randomUUID(),
+          testId,
+          label: thumb.label,
+          fileUrl,
+          note: thumb.note || null,
+          voteCount: 0,
+          ctr: 0,
+        });
+      }
+
+      const { error: thumbError } = await supabase
+        .from("Thumbnail")
+        .insert(thumbnailInserts);
+
+      if (thumbError) {
+        throw new Error(`썸네일 저장 실패: ${thumbError.message}`);
+      }
+
+      // ── 4. Audience 레코드 생성 ───────────────────
+      const { error: audienceError } = await supabase
+        .from("Audience")
+        .insert({
+          id: crypto.randomUUID(),
+          testId,
+          genders: selectedGenders,
+          ageGroups: selectedAges,
+          categories: [selectedCategory],
+          matchCount: matchCount,
+        });
+
+      if (audienceError) {
+        throw new Error(`테스터 풀 설정 실패: ${audienceError.message}`);
+      }
+
+      // ── 5. Mock 데이터도 업데이트 (웹 UI 즉시 반영) ─
+      const deadline = endType === "DURATION" || endType === "FIRST_OF"
+        ? new Date(Date.now() + durationHours * 60 * 60 * 1000)
+        : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+      addMockActiveTest({
+        id: testId,
+        channelId,
+        channelName: channel.name,
+        title,
+        thumbnailCount: thumbnails.length,
+        totalVotes: 0,
+        targetVotes: endType === "MANUAL" ? 300 : voteTarget,
+        status: "ACTIVE",
+        endConditionType: endType,
+        deadline,
+      });
+
+      router.push(`/channels/${channelId}`);
+    } catch (err) {
+      console.error("테스트 등록 오류:", err);
+      setSubmitError(
+        err instanceof Error ? err.message : "테스트 등록 중 오류가 발생했습니다."
+      );
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -501,6 +619,17 @@ export default function NewTestPage({ params }: { params: Promise<{ channelId: s
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Error Message */}
+          {submitError && (
+            <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4 flex items-start gap-3 animate-fade-in">
+              <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-red-700">등록 실패</p>
+                <p className="text-xs text-red-600 mt-1 leading-relaxed">{submitError}</p>
+              </div>
+            </div>
           )}
 
           {/* Navigation */}
