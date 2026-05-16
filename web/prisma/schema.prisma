@@ -159,17 +159,61 @@ model Audience {
 }
 
 model Vote {
-  id          String   @id @default(cuid())
-  testId      String
-  thumbnailId String
-  testerId    String
-  dwellTime   Int?
-  createdAt   DateTime @default(now())
+  id                String    @id @default(cuid())
+  testId            String
+  thumbnailId       String
+  testerId          String
+  dwellTime         Int?
+  responseTimeMs    Int?
+  tapPosition       Json?
+  thumbnailOrder    String[]
+  appSessionId      String?
+  deviceFingerprint String?
+  clientTimestamp    DateTime?
+  createdAt         DateTime  @default(now())
 
   test      Test      @relation(fields: [testId], references: [id], onDelete: Cascade)
   thumbnail Thumbnail @relation(fields: [thumbnailId], references: [id], onDelete: Cascade)
+  tester    Tester    @relation(fields: [testerId], references: [id], onDelete: Cascade)
 
   @@unique([testId, testerId])
+}
+
+model Tester {
+  id               String           @id @default(cuid())
+  authUid          String           @unique
+  nickname         String
+  gender           TesterGender
+  birthYear        Int
+  categories       String[]
+  dailyWatchTime   DailyWatchTime
+  device           DeviceType
+  coinBalance      Int              @default(0)
+  reliabilityScore Float            @default(50)
+  grade            ReliabilityGrade @default(C)
+  hitRate          Float            @default(0)
+  totalVotes       Int              @default(0)
+  streakDays       Int              @default(0)
+  referralCode     String?          @unique
+  pushMode         String           @default("INSTANT")
+  marketingConsent Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  votes            Vote[]
+  coinTransactions CoinTransaction[]
+}
+
+model CoinTransaction {
+  id        String                @id @default(cuid())
+  testerId  String
+  title     String
+  amount    Int
+  reason    String?
+  status    CoinTransactionStatus @default(EARNED)
+  createdAt DateTime              @default(now())
+
+  tester Tester @relation(fields: [testerId], references: [id], onDelete: Cascade)
 }
 
 model Insight {
@@ -239,4 +283,37 @@ enum InvoiceStatus {
   PENDING
   PAID
   FAILED
+}
+
+enum TesterGender {
+  M
+  F
+  UNDISCLOSED
+}
+
+enum DailyWatchTime {
+  UNDER_30M
+  ABOUT_1H
+  ABOUT_2H
+  OVER_3H
+}
+
+enum DeviceType {
+  MOBILE
+  PC
+  TV
+  MIXED
+}
+
+enum ReliabilityGrade {
+  S
+  A
+  B
+  C
+}
+
+enum CoinTransactionStatus {
+  EARNED
+  DEDUCTED
+  PENDING_SETTLE
 }

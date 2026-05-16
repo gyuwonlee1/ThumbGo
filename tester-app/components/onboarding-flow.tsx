@@ -2,11 +2,13 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Bell, CheckCircle2, ChevronLeft, Gift, Smartphone } from "lucide-react";
+import { Bell, CheckCircle2, ChevronLeft, Gift, Smartphone, Mail, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ViewerCategories, type TesterProfileInput } from "@/lib/schemas";
 import { saveProfile } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/lib/supabase";
 
 const watchTimes: { label: string; value: TesterProfileInput["dailyWatchTime"] }[] = [
   { label: "30분 미만", value: "<30m" },
@@ -23,9 +25,19 @@ const devices: { label: string; value: TesterProfileInput["device"] }[] = [
 ];
 
 export function OnboardingFlow() {
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [marketingConsent, setMarketingConsent] = useState(false);
+
+  // Auth 관련 state
+  const [authMode, setAuthMode] = useState<"login" | "signup">("signup");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authSuccess, setAuthSuccess] = useState<string | null>(null);
+
   const [profile, setProfile] = useState<TesterProfileInput>({
     nickname: "테스터23",
     gender: "UNDISCLOSED",
@@ -34,6 +46,65 @@ export function OnboardingFlow() {
     dailyWatchTime: "~2h",
     device: "MOBILE"
   });
+
+  // 이미 로그인 상태면 step 0 건너뛰기
+  if (user && step === 0) {
+    setStep(1);
+  }
+
+  const handleAuth = async () => {
+    setAuthLoading(true);
+    setAuthError(null);
+    setAuthSuccess(null);
+
+    try {
+      if (authMode === "signup") {
+        const { error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+        if (error) {
+          setAuthError(error.message);
+        } else {
+          setAuthSuccess("가입 완료! 계속 진행합니다.");
+          setTimeout(() => setStep(1), 500);
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        if (error) {
+          setAuthError(error.message === "Invalid login credentials"
+            ? "이메일 또는 비밀번호가 올바르지 않습니다."
+            : error.message
+          );
+        } else {
+          setStep(1);
+        }
+      }
+    } catch {
+      setAuthError("인증 중 오류가 발생했습니다.");
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setAuthLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: typeof window !== "undefined"
+          ? `${window.location.origin}/onboarding`
+          : undefined,
+      },
+    });
+    if (error) {
+      setAuthError(error.message);
+      setAuthLoading(false);
+    }
+  };
 
   const canContinue = useMemo(() => {
     if (step === 1) {
@@ -101,27 +172,99 @@ export function OnboardingFlow() {
                 5초 테스트로 코인을 적립해요
               </h1>
               <p className="mt-3 text-sm leading-6 text-white/85">
-                휴대폰 인증 또는 소셜 로그인 후, 유튜브를 보듯 썸네일을 고르면 됩니다.
+                이메일로 시작하거나 소셜 로그인 후, 유튜브를 보듯 썸네일을 고르면 됩니다.
               </p>
             </div>
+
             <div className="mt-6 space-y-3">
-              {["휴대폰 번호로 시작", "카카오로 시작", "Apple로 시작", "Google로 시작"].map(
-                (label, index) => (
+              {/* 이메일 인증 폼 */}
+              <div className="rounded-xl border border-gray-200 p-4">
+                <div className="flex gap-2 mb-4">
                   <button
-                    className={cn(
-                      "min-h-12 w-full rounded-xl border px-4 text-sm font-bold",
-                      index === 0
-                        ? "border-red-600 bg-red-600 text-white"
-                        : "border-gray-200 bg-white text-gray-900"
-                    )}
-                    key={label}
-                    onClick={() => setStep(1)}
                     type="button"
+                    className={cn(
+                      "flex-1 rounded-lg py-2 text-sm font-bold transition-colors",
+                      authMode === "signup"
+                        ? "bg-red-600 text-white"
+                        : "bg-gray-100 text-gray-600"
+                    )}
+                    onClick={() => { setAuthMode("signup"); setAuthError(null); }}
                   >
-                    {label}
+                    회원가입
                   </button>
-                )
-              )}
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex-1 rounded-lg py-2 text-sm font-bold transition-colors",
+                      authMode === "login"
+                        ? "bg-red-600 text-white"
+                        : "bg-gray-100 text-gray-600"
+                    )}
+                    onClick={() => { setAuthMode("login"); setAuthError(null); }}
+                  >
+                    로그인
+                  </button>
+                </div>
+
+                <input
+                  type="email"
+                  placeholder="이메일 주소"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="min-h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm outline-none focus:border-red-500"
+                />
+                <input
+                  type="password"
+                  placeholder="비밀번호 (6자 이상)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-2 min-h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 text-sm outline-none focus:border-red-500"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && email && password.length >= 6) {
+                      handleAuth();
+                    }
+                  }}
+                />
+
+                {authError && (
+                  <p className="mt-2 text-sm text-red-600">{authError}</p>
+                )}
+                {authSuccess && (
+                  <p className="mt-2 text-sm text-green-600">{authSuccess}</p>
+                )}
+
+                <button
+                  type="button"
+                  disabled={authLoading || !email || password.length < 6}
+                  onClick={handleAuth}
+                  className="mt-3 flex min-h-12 w-full items-center justify-center rounded-xl bg-red-600 text-sm font-bold text-white disabled:opacity-50"
+                >
+                  {authLoading ? (
+                    <Loader2 className="size-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Mail className="mr-2 size-4" />
+                      {authMode === "signup" ? "이메일로 가입" : "이메일로 로그인"}
+                    </>
+                  )}
+                </button>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-xs text-gray-400">또는</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              {/* Google 로그인 (추후 활성화) */}
+              <button
+                type="button"
+                className="min-h-12 w-full rounded-xl border border-gray-200 bg-white px-4 text-sm font-bold text-gray-900"
+                onClick={handleGoogleLogin}
+                disabled={authLoading}
+              >
+                Google로 시작
+              </button>
             </div>
           </section>
         ) : null}
