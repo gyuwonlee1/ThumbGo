@@ -153,12 +153,21 @@ export async function getHomeSummary(): Promise<HomeSummary> {
 
   const todayEarned = todayCoins?.reduce((sum, c) => sum + c.amount, 0) ?? 0;
 
-  // 오늘 테스트 응답 수
-  const { count: todayTests } = await supabase
-    .from("Vote")
-    .select("*", { count: "exact", head: true })
-    .eq("testerId", testerId)
-    .gte("createdAt", todayStart.toISOString());
+  // 오늘 테스트 응답 수 + 누적 응답 수 (Vote 테이블 직접 집계)
+  const [{ count: todayTests }, { count: totalVotesCount }] = await Promise.all([
+    supabase
+      .from("Vote")
+      .select("*", { count: "exact", head: true })
+      .eq("testerId", testerId)
+      .gte("createdAt", todayStart.toISOString()),
+    supabase
+      .from("Vote")
+      .select("*", { count: "exact", head: true })
+      .eq("testerId", testerId),
+  ]);
+
+  const totalVotes = totalVotesCount ?? 0;
+  const grade = computeGrade(totalVotes);
 
   // 대기 중인 ACTIVE 테스트 수 (아직 미투표)
   const { count: activeTestCount } = await supabase
@@ -168,13 +177,13 @@ export async function getHomeSummary(): Promise<HomeSummary> {
 
   return {
     nickname: tester.nickname,
-    coinBalance: tester.coinBalance,
+    coinBalance: tester.coinBalance ?? 0,
     todayEarned,
     todayTests: todayTests ?? 0,
-    hitRate: tester.hitRate,
-    grade: tester.grade as HomeSummary["grade"],
-    totalVotes: tester.totalVotes,
-    streakDays: tester.streakDays,
+    hitRate: tester.hitRate ?? 0,
+    grade: grade as HomeSummary["grade"],
+    totalVotes,
+    streakDays: tester.streakDays ?? 0,
     referralCode: tester.referralCode ?? "",
     activeUsersLabel: `현재 ${activeTestCount ?? 0}개의 테스트 진행 중`,
   };
@@ -312,14 +321,27 @@ export async function submitVote(payload: VoteSubmitInput) {
 
   if (error) {
     console.error("Failed to submit vote:", error.message);
-    // 중복 투표 등 에러 처리
     if (error.code === "23505") {
       return { accepted: false, error: "이미 투표한 테스트입니다." };
     }
     return { accepted: false, error: error.message };
   }
 
-  // trigger가 코인 적립을 자동 처리하므로 여기서는 성공만 반환
+  // Vote 삽입 직후 Tester의 totalVotes·grade를 즉시 갱신 (성적표/홈 캐시 반영)
+  const { count: newTotal } = await supabase
+    .from("Vote")
+    .select("*", { count: "exact", head: true })
+    .eq("testerId", testerId);
+
+  await supabase
+    .from("Tester")
+    .update({
+      totalVotes: newTotal ?? 0,
+      grade: computeGrade(newTotal ?? 0),
+    })
+    .eq("id", testerId);
+
+  // trigger가 코인 적립을 자동 처리
   return { accepted: true, awardedCoins: 5, voteId: "supabase-vote" };
 }
 
@@ -450,15 +472,19 @@ export async function getScorecard(): Promise<Scorecard> {
       color: CATEGORY_COLORS[name] ?? "bg-gray-600",
     }));
 
+  // votes 배열 길이가 곧 누적 응답 수 (항상 최신)
+  const totalVotes = votes?.length ?? 0;
+  const grade = computeGrade(totalVotes);
+
   return {
-    grade: tester.grade as Scorecard["grade"],
-    reliabilityScore: tester.reliabilityScore,
-    hitRate: tester.hitRate,
-    totalVotes: tester.totalVotes,
-    averageResponseSeconds: 6.0, // TODO: 실제 계산
-    nextGradeVotes: Math.max(0, getNextGradeThreshold(tester.grade) - tester.totalVotes),
-    weeklyHitRate: [], // TODO: 주별 집계
-    gradeTrend: [], // TODO: 등급 이력
+    grade: grade as Scorecard["grade"],
+    reliabilityScore: tester.reliabilityScore ?? 0,
+    hitRate: tester.hitRate ?? 0,
+    totalVotes,
+    averageResponseSeconds: 6.0,
+    nextGradeVotes: Math.max(0, getNextGradeThreshold(grade) - totalVotes),
+    weeklyHitRate: [],
+    gradeTrend: [],
     categories,
   };
 }
@@ -471,6 +497,13 @@ function getNextGradeThreshold(grade: string): number {
     case "S": return 999;
     default: return 50;
   }
+}
+
+function computeGrade(totalVotes: number): string {
+  if (totalVotes >= 300) return "S";
+  if (totalVotes >= 150) return "A";
+  if (totalVotes >= 50) return "B";
+  return "C";
 }
 
 // ─── 출금 요청 (stub — 추후 구현) ──────────────
