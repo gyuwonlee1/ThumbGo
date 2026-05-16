@@ -21,7 +21,7 @@ const kpiCards = [
   { label: "관리 채널", value: "5", icon: MonitorPlay, color: "text-indigo-600 bg-indigo-50", trend: "+1 이번 달" },
   { label: "진행 중 테스트", value: "3", icon: FlaskConical, color: "text-blue-600 bg-blue-50", trend: "활성 테스트" },
   { label: "이번 주 업로드 예정", value: "8", icon: Upload, color: "text-amber-600 bg-amber-50", trend: "7일 이내" },
-  { label: "남은 크레딧", value: "47", icon: Coins, color: "text-emerald-600 bg-emerald-50", trend: "/ 100 Starter" },
+  { label: "남은 크레딧", value: "11", icon: Coins, color: "text-emerald-600 bg-emerald-50", trend: "/ 100 Starter" },
 ];
 
 function getEventIcon(type: string) {
@@ -239,7 +239,7 @@ export default function DashboardPage() {
             <div className="rounded-xl bg-gradient-to-br from-indigo-600 to-purple-600 p-4 text-white">
               <div className="flex items-start gap-2 mb-2">
                 <AlertCircle className="h-4 w-4 text-indigo-200 shrink-0 mt-0.5" />
-                <p className="text-xs font-medium">크레딧이 47개 남았습니다</p>
+                <p className="text-xs font-medium">크레딧이 11개 남았습니다</p>
               </div>
               <p className="text-[10px] text-indigo-200 mb-3 leading-relaxed">
                 Pro로 업그레이드하면 월 100회 테스트와 채널 무제한 이용이 가능합니다.
