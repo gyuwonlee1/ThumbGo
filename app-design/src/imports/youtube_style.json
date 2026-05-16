@@ -1,0 +1,39 @@
+{
+    "brand": {
+        "name": "YouTube Mobile Style",
+        "primary_color": "#FF0000",
+        "background_color": "#FFFFFF",
+        "dark_mode_background": "#0F0F0F",
+        "text_color": "#030303",
+        "secondary_text_color": "#606060"
+    },
+    "typography": {
+        "font_family": "Roboto, Arial, sans-serif",
+        "base_font_size": "14px",
+        "title_font_size": "16px",
+        "meta_font_size": "12px"
+    },
+    "layout": {
+        "header_height": "56px",
+        "bottom_nav_height": "48px",
+        "max_width": "100%",
+        "grid_gap": "12px"
+    },
+    "components": {
+        "search_bar": {
+            "border_radius": "40px",
+            "background": "#f8f8f8",
+            "border": "1px solid #ccc"
+        },
+        "video_card": {
+            "thumbnail_aspect_ratio": "16/9",
+            "border_radius": "12px",
+            "padding": "12px"
+        },
+        "buttons": {
+            "border_radius": "18px",
+            "padding": "0 16px",
+            "height": "36px"
+        }
+    }
+}
