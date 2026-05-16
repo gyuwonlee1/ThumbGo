@@ -6,35 +6,22 @@ import { Bell, BarChart3, Sparkles, TrendingUp, Users } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { getHomeSummary } from "@/lib/api-client";
-import { supabase } from "@/lib/supabase";
 import { homeSummary as fixtureSummary } from "@/lib/fixtures";
 import { formatCoins } from "@/lib/utils";
 import type { HomeSummary } from "@/lib/types";
 
-export const HOME_SUMMARY_CACHE_KEY = "thumbgosu_home_summary";
+const initialSummary: HomeSummary = {
+  ...fixtureSummary,
+  todayEarned: 0,
+  todayTests: 0,
+  totalVotes: 0,
+};
 
 export default function HomePage() {
-  const [summary, setSummary] = useState<HomeSummary>(fixtureSummary);
+  const [summary, setSummary] = useState<HomeSummary>(initialSummary);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const uid = data.user?.id ?? null;
-      const cacheKey = uid ? `${HOME_SUMMARY_CACHE_KEY}_${uid}` : HOME_SUMMARY_CACHE_KEY;
-
-      // 계정별 캐시 즉시 표시
-      try {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) setSummary(JSON.parse(cached) as HomeSummary);
-      } catch {}
-
-      // 최신 데이터 fetch 및 캐시 갱신
-      getHomeSummary().then((fresh) => {
-        setSummary(fresh);
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify(fresh));
-        } catch {}
-      });
-    });
+    getHomeSummary().then(setSummary);
   }, []);
 
   return (

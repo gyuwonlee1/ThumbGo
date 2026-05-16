@@ -28,6 +28,12 @@ import type {
   Scorecard,
   ThumbnailTest,
 } from "./types";
+import {
+  DAILY_VOTE_LIMIT,
+  computeGrade,
+  computeReliabilityScore,
+  getNextGradeThreshold,
+} from "./scoring";
 
 // ─── Category 한글 → DB enum 매핑 ─────────────
 const CATEGORY_TO_ENUM: Record<string, string> = {
@@ -189,8 +195,6 @@ export async function getHomeSummary(): Promise<HomeSummary> {
   };
 }
 
-const DAILY_VOTE_LIMIT = 5;
-
 async function getTodayVoteCount(testerId: string): Promise<number> {
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
@@ -200,6 +204,25 @@ async function getTodayVoteCount(testerId: string): Promise<number> {
     .eq("testerId", testerId)
     .gte("createdAt", todayStart.toISOString());
   return count ?? 0;
+}
+
+export async function getDailyVoteQuota() {
+  const testerId = await getCurrentTesterId();
+  if (!testerId) {
+    return {
+      todayTests: 0,
+      remainingVotes: DAILY_VOTE_LIMIT,
+      limit: DAILY_VOTE_LIMIT,
+    };
+  }
+
+  const todayTests = await getTodayVoteCount(testerId);
+
+  return {
+    todayTests,
+    remainingVotes: Math.max(0, DAILY_VOTE_LIMIT - todayTests),
+    limit: DAILY_VOTE_LIMIT,
+  };
 }
 
 // ─── 테스트 피드 ──────────────────────────────
@@ -304,7 +327,12 @@ export async function submitVote(payload: VoteSubmitInput) {
   // 서버사이드 일일 5회 제한
   const todayCount = await getTodayVoteCount(testerId);
   if (todayCount >= DAILY_VOTE_LIMIT) {
-    return { accepted: false, error: "DAILY_LIMIT_REACHED" };
+    return {
+      accepted: false,
+      error: "DAILY_LIMIT_REACHED",
+      todayTests: todayCount,
+      remainingVotes: 0,
+    };
   }
 
   const { error } = await supabase.from("Vote").insert({
@@ -327,22 +355,46 @@ export async function submitVote(payload: VoteSubmitInput) {
     return { accepted: false, error: error.message };
   }
 
-  // Vote 삽입 직후 Tester의 totalVotes·grade를 즉시 갱신 (성적표/홈 캐시 반영)
-  const { count: newTotal } = await supabase
-    .from("Vote")
-    .select("*", { count: "exact", head: true })
-    .eq("testerId", testerId);
+  // Vote 삽입 직후 최신 집계를 다시 읽어 화면/성적표에 같은 값을 반영한다.
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const [{ count: newTotal }, { count: todayTests }] = await Promise.all([
+    supabase
+      .from("Vote")
+      .select("*", { count: "exact", head: true })
+      .eq("testerId", testerId),
+    supabase
+      .from("Vote")
+      .select("*", { count: "exact", head: true })
+      .eq("testerId", testerId)
+      .gte("createdAt", todayStart.toISOString()),
+  ]);
+
+  const totalVotes = newTotal ?? 0;
+  const grade = computeGrade(totalVotes);
+  const reliabilityScore = computeReliabilityScore(totalVotes);
+  const dailyTests = todayTests ?? 0;
 
   await supabase
     .from("Tester")
     .update({
-      totalVotes: newTotal ?? 0,
-      grade: computeGrade(newTotal ?? 0),
+      totalVotes,
+      grade,
+      reliabilityScore,
     })
     .eq("id", testerId);
 
   // trigger가 코인 적립을 자동 처리
-  return { accepted: true, awardedCoins: 5, voteId: "supabase-vote" };
+  return {
+    accepted: true,
+    awardedCoins: 5,
+    voteId: "supabase-vote",
+    todayTests: dailyTests,
+    remainingVotes: Math.max(0, DAILY_VOTE_LIMIT - dailyTests),
+    totalVotes,
+    grade,
+    reliabilityScore,
+  };
 }
 
 // ─── 코인 조회 ────────────────────────────────
@@ -441,7 +493,6 @@ export async function getScorecard(): Promise<Scorecard> {
   const categoryCounts: Record<string, number> = {};
   for (const vote of votes ?? []) {
     // Supabase nested select는 배열로 반환되므로 안전하게 접근
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const voteAny = vote as any;
     const testData = Array.isArray(voteAny.Test) ? voteAny.Test[0] : voteAny.Test;
     const channelData = testData ? (Array.isArray(testData.Channel) ? testData.Channel[0] : testData.Channel) : null;
@@ -475,10 +526,11 @@ export async function getScorecard(): Promise<Scorecard> {
   // votes 배열 길이가 곧 누적 응답 수 (항상 최신)
   const totalVotes = votes?.length ?? 0;
   const grade = computeGrade(totalVotes);
+  const reliabilityScore = computeReliabilityScore(totalVotes);
 
   return {
-    grade: grade as Scorecard["grade"],
-    reliabilityScore: tester.reliabilityScore ?? 0,
+    grade,
+    reliabilityScore,
     hitRate: tester.hitRate ?? 0,
     totalVotes,
     averageResponseSeconds: 6.0,
@@ -487,23 +539,6 @@ export async function getScorecard(): Promise<Scorecard> {
     gradeTrend: [],
     categories,
   };
-}
-
-function getNextGradeThreshold(grade: string): number {
-  switch (grade) {
-    case "C": return 50;
-    case "B": return 150;
-    case "A": return 300;
-    case "S": return 999;
-    default: return 50;
-  }
-}
-
-function computeGrade(totalVotes: number): string {
-  if (totalVotes >= 300) return "S";
-  if (totalVotes >= 150) return "A";
-  if (totalVotes >= 50) return "B";
-  return "C";
 }
 
 // ─── 출금 요청 (stub — 추후 구현) ──────────────

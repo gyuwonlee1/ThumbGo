@@ -25,9 +25,9 @@ export const TesterProfileSchema = z.object({
 });
 
 export const VoteSubmitSchema = z.object({
-  testId: z.string().cuid(),
-  testerId: z.string().cuid(),
-  chosenThumbnailId: z.string().cuid(),
+  testId: z.string(),
+  testerId: z.string().optional(),
+  chosenThumbnailId: z.string(),
   responseTimeMs: z.number().int().positive(),
   tapPosition: z.object({ x: z.number(), y: z.number() }),
   thumbnailOrder: z.array(z.string()),

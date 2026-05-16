@@ -5,12 +5,9 @@ import { Award, Calendar, Target, TrendingUp } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { PageHeader } from "@/components/page-header";
 import { getScorecard } from "@/lib/api-client";
-import { supabase } from "@/lib/supabase";
 import { scorecard as fixtureScorecard } from "@/lib/fixtures";
 import { cn } from "@/lib/utils";
 import type { Scorecard } from "@/lib/types";
-
-export const SCORECARD_CACHE_KEY = "thumbgosu_scorecard";
 
 const weekLabels = ["월", "화", "수", "목", "금", "토", "일"];
 
@@ -23,28 +20,20 @@ function gradeProgress(grade: string, totalVotes: number): number {
   return Math.min(100, Math.round(((totalVotes - start) / (end - start)) * 100));
 }
 
+const initialScorecard: Scorecard = {
+  ...fixtureScorecard,
+  grade: "C",
+  reliabilityScore: 0,
+  totalVotes: 0,
+  nextGradeVotes: 50,
+  categories: [],
+};
+
 export default function ScorecardPage() {
-  const [score, setScore] = useState<Scorecard>(fixtureScorecard);
+  const [score, setScore] = useState<Scorecard>(initialScorecard);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const uid = data.user?.id ?? null;
-      const cacheKey = uid ? `${SCORECARD_CACHE_KEY}_${uid}` : SCORECARD_CACHE_KEY;
-
-      // 계정별 캐시 즉시 표시
-      try {
-        const cached = localStorage.getItem(cacheKey);
-        if (cached) setScore(JSON.parse(cached) as Scorecard);
-      } catch {}
-
-      // 최신 데이터 fetch 및 캐시 갱신
-      getScorecard().then((fresh) => {
-        setScore(fresh);
-        try {
-          localStorage.setItem(cacheKey, JSON.stringify(fresh));
-        } catch {}
-      });
-    });
+    getScorecard().then(setScore);
   }, []);
 
   return (
