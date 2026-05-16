@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "apps/*"
+    "tester-app",
+    "web"
   ],
   "scripts": {
-    "dev:tester": "npm run dev -w apps/tester-app",
-    "build:tester": "npm run build -w apps/tester-app",
-    "lint:tester": "npm run lint -w apps/tester-app",
-    "test:tester": "npm run test -w apps/tester-app"
+    "dev:tester": "npm run dev -w tester-app",
+    "build:tester": "npm run build -w tester-app",
+    "lint:tester": "npm run lint -w tester-app",
+    "test:tester": "npm run test -w tester-app"
   }
 }
